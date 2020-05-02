@@ -5,7 +5,7 @@
 #include "error_dialog.h"
 
 namespace CS248 {
-
+  //see splitEdge.dwg for annotation
 VertexIter HalfedgeMesh::splitEdge(EdgeIter e0) {
   // This method should split the given edge and return an iterator to the
   // newly inserted vertex. The halfedge of this vertex should point along
@@ -24,8 +24,6 @@ VertexIter HalfedgeMesh::splitEdge(EdgeIter e0) {
   VertexIter v0 = h2->vertex();
   VertexIter v1 = h0->vertex();
   VertexIter v2 = h6->vertex();
-  VertexIter v2_ = h5->vertex();
-  assert(v2 == v2_);
   VertexIter v3 = h3->vertex();
   // EDGES
   EdgeIter e1 = h4->edge();
@@ -163,12 +161,77 @@ FaceIter HalfedgeMesh::eraseEdge(EdgeIter e) {
 }
 
 EdgeIter HalfedgeMesh::flipEdge(EdgeIter e0) {
-  // TODO: (meshEdit)
   // This method should flip the given edge and return an iterator to the
   // flipped edge.
+  HalfedgeIter h0 = e0->halfedge();
+  HalfedgeIter h1 = h0->next();
+  HalfedgeIter h2 = h1->next();
+  HalfedgeIter h3 = h0->twin();
+  HalfedgeIter h4 = h3->next();
+  HalfedgeIter h5 = h4->next();
+  HalfedgeIter h8 = h1->twin();
+  HalfedgeIter h9 = h2->twin();
+  HalfedgeIter h6 = h4->twin();
+  HalfedgeIter h7 = h5->twin();
+  // VERTICES
+  VertexIter v0 = h2->vertex();
+  VertexIter v1 = h0->vertex();
+  VertexIter v2 = h6->vertex();
+  VertexIter v3 = h3->vertex();
+  // EDGES
+  EdgeIter e1 = h4->edge();
+  EdgeIter e2 = h5->edge();
+  EdgeIter e3 = h1->edge();
+  EdgeIter e4 = h2->edge();
+  // FACES
+  FaceIter f0 = h0->face();
+  FaceIter f1 = h3->face();
 
-  showError("flipEdge() not implemented.");
-  return EdgeIter();
+  h0->twin() = h3;
+  h0->next() = h2;
+  h0->vertex() = v2;
+  h0->edge() = e0;
+  h0->face() = f0;
+
+  h1->twin() = h8;
+  h1->next() = h3;
+  h1->vertex() = v3;
+  h1->edge() = e3;
+  h1->face() = f1;
+
+  h2->twin() = h9;
+  h2->next() = h4;
+  h2->vertex() = v0;
+  h2->edge() = e4;
+  h2->face() = f0;
+
+  h3->twin() = h0;
+  h3->next() = h5;
+  h3->vertex() = v0;
+  h3->edge() = e0;
+  h3->face() = f1;
+
+  h4->twin() = h6;
+  h4->next() = h0;
+  h4->vertex() = v1;
+  h4->edge() = e1;
+  h4->face() = f0;
+
+  h5->twin() = h7;
+  h5->next() = h1;
+  h5->vertex() = v2;
+  h5->edge() = e2;
+  h5->face() = f1;
+
+  v0->halfedge() = h2;
+  v1->halfedge() = h9;
+  v2->halfedge() = h5;
+  v3->halfedge() = h1;
+
+  f0->halfedge() = h0;
+  f1->halfedge() = h3;
+
+  return e0;
 }
 
 void HalfedgeMesh::subdivideQuad(bool useCatmullClark) {
