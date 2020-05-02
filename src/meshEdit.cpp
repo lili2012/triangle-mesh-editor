@@ -187,45 +187,20 @@ EdgeIter HalfedgeMesh::flipEdge(EdgeIter e0) {
   FaceIter f0 = h0->face();
   FaceIter f1 = h3->face();
 
-  h0->twin() = h3;
+  //reassignment
   h0->next() = h2;
   h0->vertex() = v2;
-  h0->edge() = e0;
-  h0->face() = f0;
 
-  h1->twin() = h8;
   h1->next() = h3;
-  h1->vertex() = v3;
-  h1->edge() = e3;
   h1->face() = f1;
-
-  h2->twin() = h9;
   h2->next() = h4;
-  h2->vertex() = v0;
-  h2->edge() = e4;
-  h2->face() = f0;
-
-  h3->twin() = h0;
   h3->next() = h5;
   h3->vertex() = v0;
-  h3->edge() = e0;
-  h3->face() = f1;
-
-  h4->twin() = h6;
   h4->next() = h0;
-  h4->vertex() = v1;
-  h4->edge() = e1;
   h4->face() = f0;
-
-  h5->twin() = h7;
   h5->next() = h1;
-  h5->vertex() = v2;
-  h5->edge() = e2;
-  h5->face() = f1;
 
-  v0->halfedge() = h2;
   v1->halfedge() = h9;
-  v2->halfedge() = h5;
   v3->halfedge() = h1;
 
   f0->halfedge() = h0;
