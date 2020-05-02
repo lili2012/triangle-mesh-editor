@@ -60,38 +60,17 @@ VertexIter HalfedgeMesh::splitEdge(EdgeIter e0) {
   //Reassign
   h0->twin() = h10;
   h0->next() = h13;
-  h0->vertex() = v1;
-  h0->edge() = e0;
-  h0->face() = f0;
 
-  h1->twin() = h8;
   h1->next() = h12;
-  h1->vertex() = v3;
-  h1->edge() = e3;
   h1->face() = f3;
-
-  h2->twin() = h9;
-  h2->next() = h0;
-  h2->vertex() = v0;
-  h2->edge() = e4;
-  h2->face() = f0;
 
   h3->twin() = h11;
   h3->next() = h15;
-  h3->vertex() = v3;
   h3->edge() = e5;
   h3->face() = f2;
 
-  h4->twin() = h6;
   h4->next() = h14;
-  h4->vertex() = v1;
-  h4->edge() = e1;
-  h4->face() = f1;
 
-  h5->twin() = h7;
-  h5->next() = h3;
-  h5->vertex() = v2;
-  h5->edge() = e2;
   h5->face() = f2;
  
   h10->twin() = h0;
@@ -130,18 +109,9 @@ VertexIter HalfedgeMesh::splitEdge(EdgeIter e0) {
   h15->edge() = e6;
   h15->face() = f2;
 
-  v0->halfedge() = h2;
-  v1->halfedge() = h0;
-  v2->halfedge() = h5;
-  v3->halfedge() = h1;
   v4->halfedge() = h10;
 
   e0->halfedge() = h0;
-  e1->halfedge() = h4;
-  e2->halfedge() = h5;
-  e3->halfedge() = h1;
-  e4->halfedge() = h2;
-
   e5->halfedge() = h3;
   e6->halfedge() = h14;
   e7->halfedge() = h12;
