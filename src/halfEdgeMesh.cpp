@@ -101,9 +101,9 @@ void HalfedgeMesh::build(const vector<vector<Index> >& polygons,
     if (p->size() < 3) {
       // Refuse to build the mesh if any of the polygons have fewer than three
       // vertices.(Note that if we omit this check the code will still
-      // constructsomething fairlymeaningful for 1- and 2-point polygons, but
-      // enforcing this stricterrequirementon the input will help simplify code
-      // further downstream, since it canbe certainit doesn't have to check for
+      // construct something fairly meaningful for 1- and 2-point polygons, but
+      // enforcing this stricter requirement on the input will help simplify code
+      // further downstream, since it can be certain it doesn't have to check for
       // these rather degenerate cases.)
       cerr << "Error converting polygons to halfedge mesh: each polygon must "
               "have at least three vertices."
@@ -122,17 +122,18 @@ void HalfedgeMesh::build(const vector<vector<Index> >& polygons,
       polygonIndices.insert(*i);
 
       // allocate one vertex for each new index we encounter
-      if (indexToVertex.find(*i) == indexToVertex.end()) {
-        VertexIter v = newVertex();
-        v->halfedge() =
-            halfedges.end();  // this vertex doesn't yet point to any halfedge
-        indexToVertex[*i] = v;
-        vertexDegree[v] = 1;  // we've now seen this vertex only once
-      } else {
-        // keep track of the number of times we've seen this vertex
-        vertexDegree[indexToVertex[*i]]++;
-      }
+      Index index = *i;
+      auto ret = indexToVertex.insert(make_pair(index, verticesEnd()));
+      auto it = ret.first;
 
+      if (ret.second) {
+        VertexIter v = newVertex();
+        it->second = v;
+        v->halfedge() = halfedges.end();  // this vertex doesn't yet point to any halfedge
+      } 
+      VertexIter v = it->second;
+      // keep track of the number of times we've seen this vertex
+      vertexDegree[v]++;
     }  // end loop over polygon vertices
 
     // check that all vertices of the current polygon are distinct
@@ -202,11 +203,12 @@ void HalfedgeMesh::build(const vector<vector<Index> >& polygons,
 
         // link the new halfedge to its face
         hab->face() = f;
-        hab->face()->halfedge() = hab;
+        f->halfedge() = hab;
 
         // also link it to its starting vertex
-        hab->vertex() = indexToVertex[a];
-        hab->vertex()->halfedge() = hab;
+        VertexIter v = indexToVertex[a];
+        hab->vertex() = v;
+        v->halfedge() = hab;
 
         // keep a list of halfedges in this face, so that we can later
         // link them together in a loop (via their "next" pointers)
@@ -254,6 +256,7 @@ void HalfedgeMesh::build(const vector<vector<Index> >& polygons,
 
   // For each vertex on the boundary, advance its halfedge pointer to one that
   // is also on the boundary.
+  // To ensure boundary vertex's halfedge is a boundary halfedge???
   for (VertexIter v = verticesBegin(); v != verticesEnd(); v++) {
     // loop over halfedges around vertex
     HalfedgeIter h = v->halfedge();
