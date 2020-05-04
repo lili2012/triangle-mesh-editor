@@ -330,21 +330,11 @@ void HalfedgeMesh::computeCatmullClarkPositions() {
 
   // edges
   for (EdgeIter edge = edgesBegin(); edge != edgesEnd(); edge++) {
-    HalfedgeIter halfedge = edge->halfedge();
     HalfedgeIter h = edge->halfedge();
-    Vector3D Q(0.0, 0.0, 0.0);
-    int nQ = 0;
-    while (true) {
-      FaceIter face = h->face();
-      Q += face->newPosition;
-      nQ++;
-      h = h->twin()->next();
-      if (h == halfedge) break;
-    }
-    Q /= nQ;
-    FaceIter face = halfedge->face();
-    VertexIter vertex = halfedge->vertex();
-    edge->newPosition = (vertex->centroid() + Q) / 2;
+    HalfedgeIter twin = h->twin();
+    FaceIter face1 = h->face();
+    FaceIter face2 = twin->face();
+    edge->newPosition = (face1->newPosition + face2->newPosition) / 2;
   }
 
   // vertices
