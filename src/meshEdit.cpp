@@ -10,46 +10,49 @@ VertexIter HalfedgeMesh::splitEdge(EdgeIter e0) {
   // This method should split the given edge and return an iterator to the
   // newly inserted vertex. The halfedge of this vertex should point along
   // the edge that was split, rather than the new edges.
+  // Check e0's face is triangle
+
+  //bool isBoundary = false;
+  //halfedge() || halfedge()->twin()->face()->isBoundary();
+  if (!checkIfEdgeCouldSplit(e0)) {
+    return VertexIter();
+  }
   HalfedgeIter h0 = e0->halfedge();
+  if (h0->face()->isBoundary()) {
+    h0 = h0->twin();
+  }
+
   HalfedgeIter h1 = h0->next(); 
   HalfedgeIter h2 = h1->next();
   HalfedgeIter h3 = h0->twin();
-  HalfedgeIter h4 = h3->next();
-  HalfedgeIter h5 = h4->next();
   HalfedgeIter h8 = h1->twin();
   HalfedgeIter h9 = h2->twin();
-  HalfedgeIter h6 = h4->twin();
-  HalfedgeIter h7 = h5->twin();
+
   // VERTICES
   VertexIter v0 = h2->vertex();
   VertexIter v1 = h0->vertex();
-  VertexIter v2 = h6->vertex();
   VertexIter v3 = h3->vertex();
   // EDGES
-  EdgeIter e1 = h4->edge();
-  EdgeIter e2 = h5->edge();
   EdgeIter e3 = h1->edge();
   EdgeIter e4 = h2->edge();
   // FACES
   FaceIter f0 = h0->face();
-  FaceIter f1 = h3->face();
-
+ 
   //Allocate new elements
   //halfedges
   HalfedgeIter h10 = newHalfedge();
   HalfedgeIter h11 = newHalfedge();
   HalfedgeIter h12 = newHalfedge();
   HalfedgeIter h13 = newHalfedge();
-  HalfedgeIter h14 = newHalfedge();
-  HalfedgeIter h15 = newHalfedge();
+
   //vertices
   VertexIter v4 = newVertex();
   v4->position = (v1->position + v3->position) / 2;
+  v4->isNew = true;
   //edges
   EdgeIter e5 = newEdge();
-  EdgeIter e6 = newEdge();
+  e5->isNew = false;
   EdgeIter e7 = newEdge();
-  e6->isNew = true;
   e7->isNew = true;
   //faces
   FaceIter f2 = newFace();
@@ -63,19 +66,12 @@ VertexIter HalfedgeMesh::splitEdge(EdgeIter e0) {
   h1->face() = f3;
 
   h3->twin() = h11;
-  h3->next() = h15;
   h3->edge() = e5;
   h3->face() = f2;
 
-  h4->next() = h14;
-
-  h5->face() = f2;
- 
   h10->twin() = h0;
-  h10->next() = h4;
   h10->vertex() = v4;
   h10->edge() = e0;
-  h10->face() = f1;
 
   h11->twin() = h3;
   h11->next() = h1;
@@ -95,30 +91,49 @@ VertexIter HalfedgeMesh::splitEdge(EdgeIter e0) {
   h13->edge() = e7;
   h13->face() = f0;
 
-  h14->twin() = h15;
-  h14->next() = h10;
-  h14->vertex() = v2;
-  h14->edge() = e6;
-  h14->face() = f1;
-
-  h15->twin() = h14;
-  h15->next() = h5;
-  h15->vertex() = v4;
-  h15->edge() = e6;
-  h15->face() = f2;
-
   v4->halfedge() = h10;
 
   e0->halfedge() = h0;
   e5->halfedge() = h3;
-  e6->halfedge() = h14;
   e7->halfedge() = h12;
 
   f0->halfedge() = h0;
-  f1->halfedge() = h4;
   f2->halfedge() = h3;
   f3->halfedge() = h1;
 
+  if (!h3->face()->isBoundary()) {
+    HalfedgeIter h4 = h3->next();
+    HalfedgeIter h5 = h4->next();
+    HalfedgeIter h6 = h4->twin();
+    HalfedgeIter h7 = h5->twin();
+    VertexIter v2 = h6->vertex();
+    EdgeIter e1 = h4->edge();
+    EdgeIter e2 = h5->edge();
+    FaceIter f1 = h3->face();
+    HalfedgeIter h14 = newHalfedge();
+    HalfedgeIter h15 = newHalfedge();
+    EdgeIter e6 = newEdge();
+    e6->isNew = true;
+    h3->next() = h15;
+    h4->next() = h14;
+
+    h5->face() = f2;
+    h10->next() = h4;
+    h10->face() = f1;
+    h14->twin() = h15;
+    h14->next() = h10;
+    h14->vertex() = v2;
+    h14->edge() = e6;
+    h14->face() = f1;
+    h15->twin() = h14;
+    h15->next() = h5;
+    h15->vertex() = v4;
+    h15->edge() = e6;
+    h15->face() = f2;
+    e6->halfedge() = h14;
+    f1->halfedge() = h4;
+  }
+  
   return v4;
 }
 
@@ -612,13 +627,63 @@ void MeshResampler::upsample(HalfedgeMesh& mesh)
 // This routine should increase the number of triangles in the mesh using Loop
 // subdivision.
 {
-  // TODO: (meshEdit)
   // Compute new positions for all the vertices in the input mesh, using
   // the Loop subdivision rule, and store them in Vertex::newPosition.
   // -> At this point, we also want to mark each vertex as being a vertex of the
   //    original mesh.
+  for (VertexIter vertex = mesh.verticesBegin(); vertex != mesh.verticesEnd(); vertex++) {
+    if (!vertex->isBoundary()) {
+      std::pair<CS248::Vector3D, int> sumD = vertex->neighborhoodSumAndDegree();
+      Vector3D sum = sumD.first;
+      int n = sumD.second;
+      double u = 0;
+      if (n == 3) {
+        u = 3.0 / 16;
+      }
+      else {
+        u = 3.0 / (8 * n);
+      }
+      vertex->newPosition = (1 - n * u) * vertex->position + u * sum;
+    }
+    vertex->isNew = false;
+  }
+  //For boundary edges we need special treatment
+  for (FaceIter boundary = mesh.boundariesBegin(); boundary != mesh.boundariesEnd(); boundary++) {
+    HalfedgeIter h0 = boundary->halfedge();
+    HalfedgeIter h1 = h0->next();
+    HalfedgeIter _h2 = h1->next();
+    HalfedgeIter h2 = _h2;
+    VertexIter v0 = h0->vertex();
+    VertexIter v1 = h1->vertex();
+    VertexIter v2 = h2->vertex();
+    while (true) {
+      v1->newPosition = 1.0 / 8 * v0->position + 3.0 / 4 * v1->position + 1.0 / 8 * v2->position;
+      h2 = h2->next();
+      if (h2 == _h2) break;
+      v0 = v1;
+      v1 = v2;
+      v2= h2->vertex();
+    }
+  }
   // -> Next, compute the updated vertex positions associated with edges, and
   //    store it in Edge::newPosition.
+  for (EdgeIter edge = mesh.edgesBegin(); edge != mesh.edgesEnd(); edge++) {
+    Vector3D center = edge->centroid();
+    if (edge->isBoundary()) {
+      edge->newPosition = center;
+    }
+    else {
+      HalfedgeCIter h0 = edge->halfedge();
+      HalfedgeCIter h1 = h0->twin();
+      HalfedgeCIter h0_back = h0->next()->next();
+      HalfedgeCIter h1_back = h1->next()->next();
+      Vector3D p0 = h0_back->vertex()->position;
+      Vector3D p1 = h1_back->vertex()->position;
+      edge->newPosition = 3.0 / 4 * center + 1.0 / 8 * (p0 + p1);
+    }
+    
+  }
+
   // -> Next, we're going to split every edge in the mesh, in any order.  For
   //    future reference, we're also going to store some information about which
   //    subdivided edges come from splitting an edge in the original mesh, and
@@ -626,9 +691,31 @@ void MeshResampler::upsample(HalfedgeMesh& mesh)
   //    loop, we only want to iterate over edges of the original mesh.
   //    Otherwise, we'll end up splitting edges that we just split (and the
   //    loop will never end!)
-  // -> Now flip any new edge that connects an old and new vertex.
-  // -> Finally, copy the new vertex positions into final Vertex::position.
+  EdgeIter edge = mesh.edgesBegin();
+  EdgeIter end = mesh.edgesEnd();
+  EdgeIter lastEdge = --end;
+  while (true) {
+    VertexIter vertex = mesh.splitEdge(edge);
+    vertex->newPosition = edge->newPosition;
+    if (edge == lastEdge) break;
+    edge++;
+  }
 
+  // -> Now flip any new edge that connects an old and new vertex.
+  for (EdgeIter edge = mesh.edgesBegin(); edge != mesh.edgesEnd(); edge++) {
+    if (edge->isNew) {
+      HalfedgeCIter h0 = edge->halfedge();
+      HalfedgeCIter h1 = h0->twin();
+      if (!h0->vertex()->isNew || !h1->vertex()->isNew) {
+        mesh.flipEdge(edge);
+      }
+    }
+  }
+
+  // -> Finally, copy the new vertex positions into final Vertex::position.
+  for (VertexIter vertex = mesh.verticesBegin(); vertex != mesh.verticesEnd(); vertex++) {
+    vertex->position = vertex->newPosition;
+  }
   // Each vertex and edge of the original surface can be associated with a
   // vertex in the new (subdivided) surface.
   // Therefore, our strategy for computing the subdivided vertex locations is to
@@ -638,27 +725,6 @@ void MeshResampler::upsample(HalfedgeMesh& mesh)
   // the new subdivided (fine) mesh, which has more elements to traverse.  We
   // will then assign vertex positions in
   // the new mesh based on the values we computed for the original mesh.
-
-  // Compute updated positions for all the vertices in the original mesh, using
-  // the Loop subdivision rule.
-
-  // Next, compute the updated vertex positions associated with edges.
-
-  // Next, we're going to split every edge in the mesh, in any order.  For
-  // future
-  // reference, we're also going to store some information about which
-  // subdivided
-  // edges come from splitting an edge in the original mesh, and which edges are
-  // new.
-  // In this loop, we only want to iterate over edges of the original
-  // mesh---otherwise,
-  // we'll end up splitting edges that we just split (and the loop will never
-  // end!)
-
-  // Finally, flip any new edge that connects an old and new vertex.
-
-  // Copy the updated vertex positions to the subdivided mesh.
-  showError("upsample() not implemented.");
 }
 
 void MeshResampler::downsample(HalfedgeMesh& mesh) {

@@ -4,6 +4,7 @@
 #include "error_dialog.h"
 
 namespace CS248 {
+extern const HalfedgeIter INVALID_HALFEDGEITER= HalfedgeIter();
 
 bool Halfedge::isBoundary() const
 // returns true if and only if this halfedge is on the boundary
@@ -508,6 +509,28 @@ void HalfedgeMesh::triangulate() {
   }
 }
 
+bool HalfedgeMesh::checkIfEdgeCouldSplit(EdgeIter e0)
+{
+  HalfedgeCIter h0 = e0->halfedge();
+  FaceCIter f0 = h0->face();
+  if (!f0->isBoundary()) {
+    if (f0->degree() != 3) {
+      showError("Could only split triangle edge.");
+      return false;
+    }
+  }
+
+  HalfedgeCIter h1 = h0->twin();
+  FaceCIter f1 = h1->face();
+  if (!f1->isBoundary()) {
+    if (f1->degree() != 3) {
+      showError("Could only split triangle edge.");
+      return false;
+    }
+  }
+  return true;
+}
+
 Vector3D Vertex::centroid() const { return position; }
 
 void Vertex::getNeighborhood(map<HalfedgeIter, double>& seen, int depth) {
@@ -576,8 +599,14 @@ Vector3D Face::centroid() const {
 Vector3D Halfedge::centroid() const { return edge()->centroid(); }
 
 Vector3D Vertex::neighborhoodCentroid() const {
+  std::pair<CS248::Vector3D, int> sumD = neighborhoodSumAndDegree();
+  return sumD.first / sumD.second;  // compute the average
+}
+
+std::pair<CS248::Vector3D, int> Vertex::neighborhoodSumAndDegree() const
+{
   Vector3D c(0., 0., 0.);  // centroid
-  double d = 0.;           // degree (i.e., number of neighbors)
+  int d = 0;           // degree (i.e., number of neighbors)
 
   // Iterate over neighbors.
   HalfedgeCIter h = halfedge();
@@ -585,14 +614,11 @@ Vector3D Vertex::neighborhoodCentroid() const {
     // Add the contribution of the neighbor,
     // and increment the number of neighbors.
     c += h->next()->vertex()->position;
-    d += 1.;
+    d++;
 
     h = h->twin()->next();
   } while (h != halfedge());
-
-  c /= d;  // compute the average
-
-  return c;
+  return make_pair(c, d);
 }
 
 BBox Vertex::bounds() const {
@@ -644,6 +670,22 @@ BBox Halfedge::bounds() const { return edge()->bounds(); }
 float Vertex::laplacian() const {
   // TODO (Animation) Task 4
   return 0.0;
+}
+
+CS248::HalfedgeIter Vertex::getBoundaryHalfedge() const
+{
+  // iterate over the halfedges incident on this vertex
+  HalfedgeIter h = _halfedge;
+  do {
+    // check if the current halfedge is on the boundary
+    if (h->isBoundary()) {
+      return h;
+    }
+
+    // move to the next halfedge around the vertex
+    h = h->twin()->next();
+  } while (h != _halfedge);
+  return INVALID_HALFEDGEITER;
 }
 
 void Vertex::getAxes(vector<Vector3D>& axes) const {

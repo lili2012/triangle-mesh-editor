@@ -180,7 +180,7 @@ typedef list<Vertex>::iterator VertexIter;
 typedef list<Edge>::iterator EdgeIter;
 typedef list<Face>::iterator FaceIter;
 typedef list<Halfedge>::iterator HalfedgeIter;
-
+extern const HalfedgeIter INVALID_HALFEDGEITER;
 /*
  * We also need "const" iterator types, for situations where a method takes
  * a constant reference or pointer to a HalfedgeMesh.  Since these types are
@@ -609,6 +609,8 @@ class Vertex : public HalfedgeElement {
    */
   Vector3D neighborhoodCentroid() const;
 
+  std::pair<Vector3D, int> neighborhoodSumAndDegree() const;
+
   /**
    * Compute vertex normal
    * Compute the approximate unit normal at this vertex and store it in
@@ -651,20 +653,13 @@ class Vertex : public HalfedgeElement {
    * of the surface, false otherwise
    */
   bool isBoundary() const {
-    // iterate over the halfedges incident on this vertex
-    HalfedgeIter h = _halfedge;
-    do {
-      // check if the current halfedge is on the boundary
-      if (h->isBoundary()) {
-        return true;
-      }
+    
+    return getBoundaryHalfedge() !=INVALID_HALFEDGEITER;
+    // done iterating over halfedges
 
-      // move to the next halfedge around the vertex
-      h = h->twin()->next();
-    } while (h != _halfedge);  // done iterating over halfedges
-
-    return false;
   }
+
+  HalfedgeIter getBoundaryHalfedge() const;
 
   /**
    * returns the number of edges (or equivalently, polygons) touching this
@@ -956,6 +951,7 @@ class HalfedgeMesh {
    */
   void triangulate();
 
+  bool checkIfEdgeCouldSplit(EdgeIter e0);
   /**
    * Split all faces into quads by inserting a vertex at their
    * centroid (possibly using Catmull-Clark rules to compute
