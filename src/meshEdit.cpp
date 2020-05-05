@@ -55,7 +55,6 @@ VertexIter HalfedgeMesh::splitEdge(EdgeIter e0) {
   EdgeIter e7 = newEdge();
   e7->isNew = true;
   //faces
-  FaceIter f2 = newFace();
   FaceIter f3 = newFace();
   
   //Reassign
@@ -67,7 +66,7 @@ VertexIter HalfedgeMesh::splitEdge(EdgeIter e0) {
 
   h3->twin() = h11;
   h3->edge() = e5;
-  h3->face() = f2;
+
 
   h10->twin() = h0;
   h10->vertex() = v4;
@@ -98,7 +97,6 @@ VertexIter HalfedgeMesh::splitEdge(EdgeIter e0) {
   e7->halfedge() = h12;
 
   f0->halfedge() = h0;
-  f2->halfedge() = h3;
   f3->halfedge() = h1;
 
   if (!h3->face()->isBoundary()) {
@@ -114,7 +112,9 @@ VertexIter HalfedgeMesh::splitEdge(EdgeIter e0) {
     HalfedgeIter h15 = newHalfedge();
     EdgeIter e6 = newEdge();
     e6->isNew = true;
+    FaceIter f2 = newFace();
     h3->next() = h15;
+    h3->face() = f2;
     h4->next() = h14;
 
     h5->face() = f2;
@@ -132,6 +132,7 @@ VertexIter HalfedgeMesh::splitEdge(EdgeIter e0) {
     h15->face() = f2;
     e6->halfedge() = h14;
     f1->halfedge() = h4;
+    f2->halfedge() = h3;
   }
   
   return v4;
