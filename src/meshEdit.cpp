@@ -648,6 +648,9 @@ void MeshResampler::upsample(HalfedgeMesh& mesh)
     }
     vertex->isNew = false;
   }
+  for (EdgeIter edge = mesh.edgesBegin(); edge != mesh.edgesEnd(); edge++) {
+    edge->isNew = false;
+  }
   //For boundary edges we need special treatment
   for (FaceIter boundary = mesh.boundariesBegin(); boundary != mesh.boundariesEnd(); boundary++) {
     HalfedgeIter h0 = boundary->halfedge();
@@ -682,7 +685,7 @@ void MeshResampler::upsample(HalfedgeMesh& mesh)
       Vector3D p1 = h1_back->vertex()->position;
       edge->newPosition = 3.0 / 4 * center + 1.0 / 8 * (p0 + p1);
     }
-    
+
   }
 
   // -> Next, we're going to split every edge in the mesh, in any order.  For
