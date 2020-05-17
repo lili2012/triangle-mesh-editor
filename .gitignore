@@ -6,3 +6,4 @@ bin_vs2019
 *.bak
 *.dwl
 *.dwl2
+*.log

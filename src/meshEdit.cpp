@@ -519,15 +519,89 @@ FaceIter HalfedgeMesh::bevelEdge(EdgeIter e) {
 
 FaceIter HalfedgeMesh::bevelFace(FaceIter f) {
   // *** Extra Credit ***
-  // TODO This method should replace the face f with an additional, inset face
+  // This method should replace the face f with an additional, inset face
   // (and ring of faces around it), corresponding to a bevel operation. It
   // should return the new face.  NOTE: This method is responsible for updating
   // the *connectivity* of the mesh only---it does not need to update the vertex
   // positions.  These positions will be updated in
   // HalfedgeMesh::bevelFaceComputeNewPositions (which you also have to
   // implement!)
+  int degree = f->degree();
+  HalfedgeIter h0_0 = f->halfedge();
+  struct HalfEdges {
+    HalfedgeIter h0;
+    HalfedgeIter h1;
+  };
+  //collect elements
+  VertexIter* v = (VertexIter*)_alloca(sizeof(VertexIter) * degree);
+  HalfedgeIter halfedge = h0_0;
+  for (int i = 0; i < degree; i++) {
+    v[i] = halfedge->vertex();
+    halfedge = halfedge->next();
+  }
 
-  showError("bevelFace() not implemented.");
+  EdgeIter* e = (EdgeIter*)_alloca(sizeof(EdgeIter) * degree);
+  halfedge = h0_0;
+  for (int i = 0; i < degree; i++) {
+    e[i] = halfedge->edge();
+    halfedge = halfedge->next();
+  }
+  
+  
+  HalfEdges* h = (HalfEdges*)_alloca(sizeof(HalfEdges) * degree);
+  halfedge = h0_0;
+  for (int i = 0; i < degree; i++) {
+    HalfEdges& hi = h[i];
+    hi.h0 = halfedge;
+    hi.h1 = halfedge->twin();
+    halfedge = halfedge->next();
+  }
+  //allocate new elements
+  VertexIter* v = (VertexIter*)_alloca(sizeof(VertexIter) * degree);
+  for (int i = 0; i < degree; i++) {
+    v[i] = newVertex();
+  }
+  VertexIter* vi = v;
+  EdgeIter* ei = (EdgeIter*)_alloca(sizeof(EdgeIter) * degree);
+  for (int i = 0; i < degree; i++) {
+    ei[i] = newEdge();
+  }
+  EdgeIter* ec= (EdgeIter*)_alloca(sizeof(EdgeIter) * degree);
+  for (int i = 0; i < degree; i++) {
+    ec[i] = newEdge();
+  }
+  FaceIter* fn =(FaceIter*)_alloca(sizeof(FaceIter) * degree);
+  for (int i = 0; i < degree; i++) {
+    fn[i] = newFace();
+  }
+  HalfEdges* hi= (HalfEdges*)_alloca(sizeof(HalfEdges) * degree);
+  for (int i = 0; i < degree; i++) {
+    hi[i].h0 = newHalfedge();
+    hi[i].h1 = newHalfedge();
+  }
+  HalfEdges* hc = (HalfEdges*)_alloca(sizeof(HalfEdges) * degree);
+  for (int i = 0; i < degree; i++) {
+    hc[i].h0 = newHalfedge();
+    hc[i].h1 = newHalfedge();
+  }
+  //reassign elements
+  halfedge = h0_0;
+  for (int i = 0; i < degree; i++) {
+    halfedge->next() = hc[(i+1)].h0;
+    halfedge->face() = fn[i];
+    halfedge = halfedge->next();
+  }
+  //hc1_0
+  for (int i = 0; i < degree; i++) {
+    halfedge->next() = hc[(i + 1)].h0;
+    halfedge->face() = fn[i];
+    halfedge = halfedge->next();
+  }
+
+
+
+
+
   return facesBegin();
 }
 
