@@ -669,7 +669,6 @@ namespace CS248 {
     return f;
   }
 
-
   void HalfedgeMesh::bevelFaceComputeNewPositions(
     vector<Vector3D>& originalVertexPositions,
     vector<HalfedgeIter>& newHalfedges, double normalShift,
@@ -696,17 +695,18 @@ namespace CS248 {
     // }
     //
     int n = newHalfedges.size();
+    vector<Vector3D> normals(n);
+    //in case originalVertexPositions's 3D points are not in a plane, I use bisector to calculate new shift points
     for (int i = 0; i < n; i++)
     {
-      Vector3D pi = originalVertexPositions[i]; // get the original vertex
-      int iprev = prev(i, n);
+      Vector3D pi = originalVertexPositions[i]; 
       int inext = next(i, n);
-      
-      newHalfedges[i]->vertex()->position = pi;
-
-
-
+      Vector3D pNext = originalVertexPositions[inext];
+      normals[i] = (pNext - pi);
+      normals[i].normalize();
     }
+    for
+
 
   }
 
