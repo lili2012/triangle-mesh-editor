@@ -544,22 +544,28 @@ namespace CS248 {
       HalfedgeIter h1;
     };
     //collect elements
-    VertexIter* v = (VertexIter*)_alloca(sizeof(VertexIter) * n);
+    size_t size = sizeof(VertexIter) * n;
+    VertexIter* v = (VertexIter*)_alloca(size);
+    memset(v, 0, size);
     HalfedgeIter halfedge = h0_0;
     for (int i = 0; i < n; i++) {
-      v[i] = halfedge->vertex();
+      VertexIter vertex = halfedge->vertex();
+      v[i] = vertex;
       halfedge = halfedge->next();
     }
 
-    EdgeIter* e = (EdgeIter*)_alloca(sizeof(EdgeIter) * n);
+    size = sizeof(EdgeIter) * n;
+    EdgeIter* e = (EdgeIter*)_alloca(size);
+    memset(e, 0, size);
     halfedge = h0_0;
     for (int i = 0; i < n; i++) {
       e[i] = halfedge->edge();
       halfedge = halfedge->next();
     }
 
-
-    HalfEdges* h = (HalfEdges*)_alloca(sizeof(HalfEdges) * n);
+    size = sizeof(HalfEdges) * n;
+    HalfEdges* h = (HalfEdges*)_alloca(size);
+    memset(h, 0, size);
     halfedge = h0_0;
     for (int i = 0; i < n; i++) {
       HalfEdges& hi = h[i];
@@ -567,30 +573,48 @@ namespace CS248 {
       hi.h1 = halfedge->twin();
       halfedge = halfedge->next();
     }
+
     //allocate new elements
-    VertexIter* vi = (VertexIter*)_alloca(sizeof(VertexIter) * n);
+    size = sizeof(VertexIter) * n;
+    VertexIter* vi = (VertexIter*)_alloca(size);
+    memset(vi, 0, size);
     for (int i = 0; i < n; i++) {
       vi[i] = newVertex();
+      vi[i]->position = v[i]->position;
     }
 
-    EdgeIter* ei = (EdgeIter*)_alloca(sizeof(EdgeIter) * n);
+    size = sizeof(EdgeIter) * n;
+    EdgeIter* ei = (EdgeIter*)_alloca(size);
+    memset(ei, 0, size);
     for (int i = 0; i < n; i++) {
       ei[i] = newEdge();
     }
-    EdgeIter* ec = (EdgeIter*)_alloca(sizeof(EdgeIter) * n);
+
+    size = sizeof(EdgeIter) * n;
+    EdgeIter* ec = (EdgeIter*)_alloca(size);
+    memset(ec, 0, size);
     for (int i = 0; i < n; i++) {
       ec[i] = newEdge();
     }
-    FaceIter* fn = (FaceIter*)_alloca(sizeof(FaceIter) * n);
+
+    size = sizeof(FaceIter) * n;
+    FaceIter* fn = (FaceIter*)_alloca(size);
+    memset(fn, 0, size);
     for (int i = 0; i < n; i++) {
       fn[i] = newFace();
     }
-    HalfEdges* hi = (HalfEdges*)_alloca(sizeof(HalfEdges) * n);
+
+    size = sizeof(HalfEdges) * n;
+    HalfEdges* hi = (HalfEdges*)_alloca(size);
+    memset(hi, 0, size);
     for (int i = 0; i < n; i++) {
       hi[i].h0 = newHalfedge();
       hi[i].h1 = newHalfedge();
     }
-    HalfEdges* hc = (HalfEdges*)_alloca(sizeof(HalfEdges) * n);
+
+    size = sizeof(HalfEdges) * n;
+    HalfEdges* hc = (HalfEdges*)_alloca(size);
+    memset(hc, 0, size);
     for (int i = 0; i < n; i++) {
       hc[i].h0 = newHalfedge();
       hc[i].h1 = newHalfedge();
@@ -699,13 +723,26 @@ namespace CS248 {
     //in case originalVertexPositions's 3D points are not in a plane, I use bisector to calculate new shift points
     for (int i = 0; i < n; i++)
     {
-      Vector3D pi = originalVertexPositions[i]; 
+      Vector3D pi = originalVertexPositions[i];
       int inext = next(i, n);
       Vector3D pNext = originalVertexPositions[inext];
       normals[i] = (pNext - pi);
       normals[i].normalize();
     }
-    for
+
+    for (int i = 0; i < n; i++)
+    {
+      int iprev = prev(i, n);
+      const Vector3D& nomalPrev = normals.at(iprev);
+      const Vector3D& nomal = normals.at(i);
+      Vector3D bisector = nomal - nomalPrev;
+      bisector.normalize();
+      double cosa = dot(bisector, nomal);
+      double sina = sqrt(1 - cosa * cosa);
+      Vector3D up = cross(nomalPrev, nomal);
+      up.normalize();
+      newHalfedges[i]->vertex()->position += (bisector * normalShift * sina + up * tangentialInset);
+    }
 
 
   }
