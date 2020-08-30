@@ -494,15 +494,151 @@ namespace CS248 {
 
   FaceIter HalfedgeMesh::bevelVertex(VertexIter v) {
     // *** Extra Credit ***
-    // TODO This method should replace the vertex v with a face, corresponding to
+    // This method should replace the vertex v with a face, corresponding to
     // a bevel operation. It should return the new face.  NOTE: This method is
     // responsible for updating the *connectivity* of the mesh only---it does not
     // need to update the vertex positions.  These positions will be updated in
     // HalfedgeMesh::bevelVertexComputeNewPositions (which you also have to
     // implement!)
+    HalfedgeIter hc0_1 = v->halfedge();
+    HalfedgeIter hc0_0 = hc0_1->twin();
 
-    showError("bevelVertex() not implemented.");
-    return facesBegin();
+    HalfedgeIter h0_0 = hc0_1->next();
+    HalfedgeIter h0_1 = h0_0->twin();
+
+    HalfedgeIter hc1_0 = h0_0->next();
+    HalfedgeIter hc1_1 = hc1_0->twin();
+
+    HalfedgeIter h1_0 = hc1_1->next();
+    HalfedgeIter h1_1 = h1_0->twin();
+
+    HalfedgeIter hc2_0 = h1_0->next();
+    HalfedgeIter hc2_1 = hc2_0->twin();
+
+    HalfedgeIter h2_0 = hc2_1->next();
+    HalfedgeIter h2_1 = h2_0->twin();
+
+    HalfedgeIter hc3_0 = h2_0->next();
+    HalfedgeIter hc3_1 = hc3_0->twin();
+
+    HalfedgeIter h3_0 = hc3_1->next();
+    HalfedgeIter h3_1 = h3_0->twin();
+    // VERTICES
+    VertexIter v0 = hc0_0->vertex();
+    VertexIter v1 = hc1_0->vertex();
+    VertexIter v2 = hc2_0->vertex();
+    VertexIter v3 = hc3_0->vertex();
+    // EDGES
+    EdgeIter ec0 = hc0_0->edge();
+    EdgeIter ec1 = hc1_0->edge();
+    EdgeIter ec2 = hc2_0->edge();
+    EdgeIter ec3 = hc3_0->edge();
+
+    EdgeIter e0 = h0_0->edge();
+    EdgeIter e1 = h1_0->edge();
+    EdgeIter e2 = h2_0->edge();
+    EdgeIter e3 = h3_0->edge();
+    // FACES
+    FaceIter fn0 = h0_0->face();
+    FaceIter fn1 = h1_0->face();
+    FaceIter fn2 = h2_0->face();
+    FaceIter fn3 = h3_0->face();
+    //Allocate new elements
+    //halfedges
+    HalfedgeIter hi0_0 = newHalfedge();
+    HalfedgeIter hi0_1 = newHalfedge();
+    HalfedgeIter hi1_0 = newHalfedge();
+    HalfedgeIter hi1_1 = newHalfedge();
+    HalfedgeIter hi2_0 = newHalfedge();
+    HalfedgeIter hi2_1 = newHalfedge();
+    HalfedgeIter hi3_0 = newHalfedge();
+    HalfedgeIter hi3_1 = newHalfedge();
+
+    //vertices
+    VertexIter vi0 = v;
+    VertexIter vi1 = newVertex();
+    VertexIter vi2 = newVertex();
+    VertexIter vi3 = newVertex();
+    //edges
+    EdgeIter ei0 = newEdge();
+    EdgeIter ei1 = newEdge();
+    EdgeIter ei2 = newEdge();
+    EdgeIter ei3 = newEdge();
+    //faces
+    FaceIter f = newFace();
+
+    //Reassign
+    hc0_0->next() = hi3_1;
+    hc1_0->next() = hi0_1;
+    hc2_0->next() = hi1_1;
+    hc3_0->next() = hi2_1;
+
+    hc0_1->vertex() = vi0;
+    hc1_1->vertex() = vi1;
+    hc2_1->vertex() = vi2;
+    hc3_1->vertex() = vi3;
+
+    hi0_0->twin() = hi0_1;
+    hi0_0->next() = hi1_0;
+    hi0_0->face() = f;
+    hi0_0->edge() = ei0;
+    hi0_0->vertex() = vi0;
+
+    hi1_0->twin() = hi1_1;
+    hi1_0->next() = hi2_0;
+    hi1_0->face() = f;
+    hi1_0->edge() = ei1;
+    hi1_0->vertex() = vi1;
+
+    hi2_0->twin() = hi2_1;
+    hi2_0->next() = hi3_0;
+    hi2_0->face() = f;
+    hi2_0->edge() = ei2;
+    hi2_0->vertex() = vi2;
+
+    hi3_0->twin() = hi3_1;
+    hi3_0->next() = hi0_0;
+    hi3_0->face() = f;
+    hi3_0->edge() = ei3;
+    hi3_0->vertex() = vi3;
+
+    hi0_1->twin() = hi0_0;
+    hi0_1->next() = hc0_1;
+    hi0_1->face() = fn0;
+    hi0_1->edge() = ei0;
+    hi0_1->vertex() = vi1;
+
+    hi1_1->twin() = hi1_0;
+    hi1_1->next() = hc1_1;
+    hi1_1->face() = fn1;
+    hi1_1->edge() = ei1;
+    hi1_1->vertex() = vi2;
+
+    hi2_1->twin() = hi2_0;
+    hi2_1->next() = hc2_1;
+    hi2_1->face() = fn2;
+    hi2_1->edge() = ei2;
+    hi2_1->vertex() = vi3;
+
+    hi3_1->twin() = hi3_0;
+    hi3_1->next() = hc3_1;
+    hi3_1->face() = fn3;
+    hi3_1->edge() = ei3;
+    hi3_1->vertex() = vi0;
+
+    vi0->halfedge() = hi0_0;
+    vi1->halfedge() = hi1_0;
+    vi2->halfedge() = hi2_0;
+    vi3->halfedge() = hi3_0;
+
+    ei0->halfedge() = hi0_0;
+    ei1->halfedge() = hi1_0;
+    ei2->halfedge() = hi2_0;
+    ei3->halfedge() = hi3_0;
+
+    f->halfedge() = hi0_0;
+
+    return f;
   }
 
   FaceIter HalfedgeMesh::bevelEdge(EdgeIter e) {
@@ -751,7 +887,7 @@ namespace CS248 {
     Vector3D originalVertexPosition, vector<HalfedgeIter>& newHalfedges,
     double tangentialInset) {
     // *** Extra Credit ***
-    // TODO Compute new vertex positions for the vertices of the beveled vertex.
+    // Compute new vertex positions for the vertices of the beveled vertex.
     //
     // These vertices can be accessed via newHalfedges[i]->vertex()->position for
     // i = 1, ..., hs.size()-1.
