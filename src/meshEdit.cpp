@@ -492,6 +492,15 @@ namespace CS248 {
     }
   }
 
+  static inline int prev(int i, int n)
+  {
+    return (i + n - 1) % n;
+  }
+  static inline int next(int i, int n)
+  {
+    return (i + 1) % n;
+  }
+
   FaceIter HalfedgeMesh::bevelVertex(VertexIter v) {
     // *** Extra Credit ***
     // This method should replace the vertex v with a face, corresponding to
@@ -500,144 +509,81 @@ namespace CS248 {
     // need to update the vertex positions.  These positions will be updated in
     // HalfedgeMesh::bevelVertexComputeNewPositions (which you also have to
     // implement!)
+    int n = v->degree();
     HalfedgeIter hc0_1 = v->halfedge();
-    HalfedgeIter hc0_0 = hc0_1->twin();
+    struct HalfEdges {
+      HalfedgeIter h0;
+      HalfedgeIter h1;
+    };
+    //collect elements
+    size_t size = sizeof(HalfEdges) * n;
+    HalfEdges* hc = (HalfEdges*)_alloca(size);
+    memset(hc, 0, size);
+    size = sizeof(EdgeIter) * n;
+    EdgeIter* ec = (EdgeIter*)_alloca(size);
+    memset(ec, 0, size);
+    size = sizeof(FaceIter) * n;
+    FaceIter* fn = (FaceIter*)_alloca(size);
+    memset(fn, 0, size);
+    HalfedgeIter halfedge = hc0_1;
+    for (int i = 0; i < n; i++) {
+      hc[i].h1 = halfedge;
+      hc[i].h0 = halfedge->twin();
 
-    HalfedgeIter h0_0 = hc0_1->next();
-    HalfedgeIter h0_1 = h0_0->twin();
+      ec[i] = hc[i].h0->edge();
 
-    HalfedgeIter hc1_0 = h0_0->next();
-    HalfedgeIter hc1_1 = hc1_0->twin();
+      fn[i] = hc[i].h0->face();
 
-    HalfedgeIter h1_0 = hc1_1->next();
-    HalfedgeIter h1_1 = h1_0->twin();
+      halfedge = halfedge->twin()->next();
+    }
 
-    HalfedgeIter hc2_0 = h1_0->next();
-    HalfedgeIter hc2_1 = hc2_0->twin();
-
-    HalfedgeIter h2_0 = hc2_1->next();
-    HalfedgeIter h2_1 = h2_0->twin();
-
-    HalfedgeIter hc3_0 = h2_0->next();
-    HalfedgeIter hc3_1 = hc3_0->twin();
-
-    HalfedgeIter h3_0 = hc3_1->next();
-    HalfedgeIter h3_1 = h3_0->twin();
-    // VERTICES
-    VertexIter v0 = hc0_0->vertex();
-    VertexIter v1 = hc1_0->vertex();
-    VertexIter v2 = hc2_0->vertex();
-    VertexIter v3 = hc3_0->vertex();
-    // EDGES
-    EdgeIter ec0 = hc0_0->edge();
-    EdgeIter ec1 = hc1_0->edge();
-    EdgeIter ec2 = hc2_0->edge();
-    EdgeIter ec3 = hc3_0->edge();
-
-    EdgeIter e0 = h0_0->edge();
-    EdgeIter e1 = h1_0->edge();
-    EdgeIter e2 = h2_0->edge();
-    EdgeIter e3 = h3_0->edge();
-    // FACES
-    FaceIter fn0 = h0_0->face();
-    FaceIter fn1 = h1_0->face();
-    FaceIter fn2 = h2_0->face();
-    FaceIter fn3 = h3_0->face();
     //Allocate new elements
     //halfedges
-    HalfedgeIter hi0_0 = newHalfedge();
-    HalfedgeIter hi0_1 = newHalfedge();
-    HalfedgeIter hi1_0 = newHalfedge();
-    HalfedgeIter hi1_1 = newHalfedge();
-    HalfedgeIter hi2_0 = newHalfedge();
-    HalfedgeIter hi2_1 = newHalfedge();
-    HalfedgeIter hi3_0 = newHalfedge();
-    HalfedgeIter hi3_1 = newHalfedge();
+    size = sizeof(HalfEdges) * n;
+    HalfEdges* hi = (HalfEdges*)_alloca(size);
+    memset(hi, 0, size);
+    size = sizeof(VertexIter) * n;
+    VertexIter* vi = (VertexIter*)_alloca(size);
+    memset(vi, 0, size);
+    Vector3D pos = v->position;
+    size = sizeof(EdgeIter) * n;
+    EdgeIter* ei = (EdgeIter*)_alloca(size);
+    memset(ei, 0, size);
 
-    //vertices
-    VertexIter vi0 = v;
-    VertexIter vi1 = newVertex();
-    VertexIter vi2 = newVertex();
-    VertexIter vi3 = newVertex();
-    //edges
-    EdgeIter ei0 = newEdge();
-    EdgeIter ei1 = newEdge();
-    EdgeIter ei2 = newEdge();
-    EdgeIter ei3 = newEdge();
+    for (int i = 0; i < n; i++) {
+      hi[i].h0 = newHalfedge();
+      hi[i].h1 = newHalfedge();
+      vi[i]= newVertex();
+      vi[i]->position = pos;
+      ei[i] = newEdge();
+    }
     //faces
     FaceIter f = newFace();
 
     //Reassign
-    hc0_0->next() = hi3_1;
-    hc1_0->next() = hi0_1;
-    hc2_0->next() = hi1_1;
-    hc3_0->next() = hi2_1;
+    for (int i = 0; i < n; i++) {
+      hc[i].h0->next() = hi[i].h1;
+      hc[i].h1->vertex() = vi[i];
 
-    hc0_1->vertex() = vi0;
-    hc1_1->vertex() = vi1;
-    hc2_1->vertex() = vi2;
-    hc3_1->vertex() = vi3;
+      int iNext = next(i, n);
+      int iPrev = prev(i, n);
+      hi[i].h0->twin() = hi[i].h1;
+      hi[i].h0->next() = hi[iPrev].h0;
+      hi[i].h0->face() = f;
+      hi[i].h0->edge() = ei[i];
+      hi[i].h0->vertex() = vi[iNext];
 
-    hi0_0->twin() = hi0_1;
-    hi0_0->next() = hi1_0;
-    hi0_0->face() = f;
-    hi0_0->edge() = ei0;
-    hi0_0->vertex() = vi0;
+      hi[i].h1->twin() = hi[i].h0;
+      hi[i].h1->next() = hc[iNext].h1;
+      hi[i].h1->face() = fn[i];
+      hi[i].h1->edge() = ei[i];
+      hi[i].h1->vertex() = vi[i];
 
-    hi1_0->twin() = hi1_1;
-    hi1_0->next() = hi2_0;
-    hi1_0->face() = f;
-    hi1_0->edge() = ei1;
-    hi1_0->vertex() = vi1;
+      vi[i]->halfedge() = hi[i].h1;
+      ei[i]->halfedge() = hi[i].h1;
+    }
 
-    hi2_0->twin() = hi2_1;
-    hi2_0->next() = hi3_0;
-    hi2_0->face() = f;
-    hi2_0->edge() = ei2;
-    hi2_0->vertex() = vi2;
-
-    hi3_0->twin() = hi3_1;
-    hi3_0->next() = hi0_0;
-    hi3_0->face() = f;
-    hi3_0->edge() = ei3;
-    hi3_0->vertex() = vi3;
-
-    hi0_1->twin() = hi0_0;
-    hi0_1->next() = hc0_1;
-    hi0_1->face() = fn0;
-    hi0_1->edge() = ei0;
-    hi0_1->vertex() = vi1;
-
-    hi1_1->twin() = hi1_0;
-    hi1_1->next() = hc1_1;
-    hi1_1->face() = fn1;
-    hi1_1->edge() = ei1;
-    hi1_1->vertex() = vi2;
-
-    hi2_1->twin() = hi2_0;
-    hi2_1->next() = hc2_1;
-    hi2_1->face() = fn2;
-    hi2_1->edge() = ei2;
-    hi2_1->vertex() = vi3;
-
-    hi3_1->twin() = hi3_0;
-    hi3_1->next() = hc3_1;
-    hi3_1->face() = fn3;
-    hi3_1->edge() = ei3;
-    hi3_1->vertex() = vi0;
-
-    vi0->halfedge() = hi0_0;
-    vi1->halfedge() = hi1_0;
-    vi2->halfedge() = hi2_0;
-    vi3->halfedge() = hi3_0;
-
-    ei0->halfedge() = hi0_0;
-    ei1->halfedge() = hi1_0;
-    ei2->halfedge() = hi2_0;
-    ei3->halfedge() = hi3_0;
-
-    f->halfedge() = hi0_0;
-
+    f->halfedge() = hi[0].h0;
     return f;
   }
 
@@ -655,14 +601,7 @@ namespace CS248 {
   }
 
 
-  static inline int prev(int i, int n)
-  {
-    return (i + n - 1) % n;
-  }
-  static inline int next(int i, int n)
-  {
-    return (i + 1) % n;
-  }
+ 
 
   FaceIter HalfedgeMesh::bevelFace(FaceIter f) {
     // *** Extra Credit ***
@@ -758,7 +697,7 @@ namespace CS248 {
     //reassign elements
     for (int i = 0; i < n; i++) {
       HalfedgeIter halfedge = h[i].h0;
-      halfedge->next() = hc[(i + 1) % n].h0;
+      halfedge->next() = hc[next(i, n)].h0;
       halfedge->face() = fn[i];
     }
     //hc1_0
@@ -895,6 +834,30 @@ namespace CS248 {
     // The basic strategy here is to loop over the list of outgoing halfedges,
     // and use the preceding and next vertex position from the original mesh
     // (in the orig array) to compute an offset vertex position.
+    Vector3D norm;
+    for (auto halfedge : newHalfedges) {
+      Vector3D pos = halfedge->twin()->vertex()->position;
+
+      //Vector3D pos = halfedge->vertex()->position;
+      Vector3D vec = originalVertexPosition - pos;
+      vec.normalize();
+      norm += vec;
+    }
+    norm.normalize();
+
+    for (auto halfedge : newHalfedges) {
+      Vector3D pos = halfedge->twin()->vertex()->position;
+      Vector3D vec = pos - originalVertexPosition;
+      double proj = dot(vec, norm);
+      double frac = tangentialInset / proj;
+
+      halfedge->vertex()->position+= vec* frac;
+    }
+
+
+
+
+
 
   }
 
