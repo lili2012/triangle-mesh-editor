@@ -516,44 +516,44 @@ namespace CS248 {
       HalfedgeIter h1;
     };
     //collect elements
-    size_t size = sizeof(HalfEdges) * n;
-    HalfEdges* hc = (HalfEdges*)_alloca(size);
-    memset(hc, 0, size);
-    size = sizeof(EdgeIter) * n;
-    EdgeIter* ec = (EdgeIter*)_alloca(size);
-    memset(ec, 0, size);
-    size = sizeof(FaceIter) * n;
-    FaceIter* fn = (FaceIter*)_alloca(size);
-    memset(fn, 0, size);
+//  size_t size = sizeof(HalfEdges) * n;
+//  HalfEdges* hc = (HalfEdges*)_alloca(size);
+//  memset(hc, 0, size);
+    vector<HalfEdges>hc(n);
+//  size = sizeof(FaceIter) * n;
+//  FaceIter* fn = (FaceIter*)_alloca(size);
+//  memset(fn, 0, size);
+    vector< FaceIter>fn(n);
     HalfedgeIter halfedge = hc0_1;
     for (int i = 0; i < n; i++) {
       hc[i].h1 = halfedge;
-      hc[i].h0 = halfedge->twin();
-
-      ec[i] = hc[i].h0->edge();
+      HalfedgeIter halfedgeTwin = halfedge->twin();
+      hc[i].h0 = halfedgeTwin;
 
       fn[i] = hc[i].h0->face();
 
-      halfedge = halfedge->twin()->next();
+      halfedge = halfedgeTwin->next();
     }
 
     //Allocate new elements
     //halfedges
-    size = sizeof(HalfEdges) * n;
-    HalfEdges* hi = (HalfEdges*)_alloca(size);
-    memset(hi, 0, size);
-    size = sizeof(VertexIter) * n;
-    VertexIter* vi = (VertexIter*)_alloca(size);
-    memset(vi, 0, size);
+//     size = sizeof(HalfEdges) * n;
+//     HalfEdges* hi = (HalfEdges*)_alloca(size);
+//     memset(hi, 0, size);
+    vector< HalfEdges>hi(n);
+//     size = sizeof(VertexIter) * n;
+//     VertexIter* vi = (VertexIter*)_alloca(size);
+//     memset(vi, 0, size);
+    vector< VertexIter>vi(n);
     Vector3D pos = v->position;
-    size = sizeof(EdgeIter) * n;
-    EdgeIter* ei = (EdgeIter*)_alloca(size);
-    memset(ei, 0, size);
-
+//     size = sizeof(EdgeIter) * n;
+//     EdgeIter* ei = (EdgeIter*)_alloca(size);
+//     memset(ei, 0, size);
+    vector< EdgeIter>ei(n);
     for (int i = 0; i < n; i++) {
       hi[i].h0 = newHalfedge();
       hi[i].h1 = newHalfedge();
-      vi[i]= newVertex();
+      vi[i] = newVertex();
       vi[i]->position = pos;
       ei[i] = newEdge();
     }
@@ -601,7 +601,7 @@ namespace CS248 {
   }
 
 
- 
+
 
   FaceIter HalfedgeMesh::bevelFace(FaceIter f) {
     // *** Extra Credit ***
@@ -835,7 +835,7 @@ namespace CS248 {
     // and use the preceding and next vertex position from the original mesh
     // (in the orig array) to compute an offset vertex position.
     Vector3D norm;
-    for (auto halfedge : newHalfedges) {
+    for (auto& halfedge : newHalfedges) {
       Vector3D pos = halfedge->twin()->vertex()->position;
 
       //Vector3D pos = halfedge->vertex()->position;
@@ -845,19 +845,14 @@ namespace CS248 {
     }
     norm.normalize();
 
-    for (auto halfedge : newHalfedges) {
+    for (auto& halfedge : newHalfedges) {
       Vector3D pos = halfedge->twin()->vertex()->position;
       Vector3D vec = pos - originalVertexPosition;
       double proj = dot(vec, norm);
       double frac = tangentialInset / proj;
 
-      halfedge->vertex()->position+= vec* frac;
+      halfedge->vertex()->position += vec * frac;
     }
-
-
-
-
-
 
   }
 
