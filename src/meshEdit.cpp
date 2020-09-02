@@ -584,6 +584,16 @@ namespace CS248 {
     }
 
     f->halfedge() = hi[0].h0;
+    for (int i = 0; i < n; i++) {
+      hc[i].h0.HalfedgeIter::~HalfedgeIter();
+      hc[i].h1.HalfedgeIter::~HalfedgeIter();
+      hi[i].h0.HalfedgeIter::~HalfedgeIter();
+      hi[i].h1.HalfedgeIter::~HalfedgeIter();
+      ec[i].EdgeIter::~EdgeIter();
+      fn[i].FaceIter::~FaceIter();
+      vi[i].VertexIter::~VertexIter();
+      ei[i].EdgeIter::~EdgeIter();
+    }
     return f;
   }
 
