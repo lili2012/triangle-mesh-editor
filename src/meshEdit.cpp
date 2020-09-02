@@ -516,20 +516,23 @@ namespace CS248 {
       HalfedgeIter h1;
     };
     //collect elements
-//  size_t size = sizeof(HalfEdges) * n;
-//  HalfEdges* hc = (HalfEdges*)_alloca(size);
-//  memset(hc, 0, size);
-    vector<HalfEdges>hc(n);
-//  size = sizeof(FaceIter) * n;
-//  FaceIter* fn = (FaceIter*)_alloca(size);
-//  memset(fn, 0, size);
-    vector< FaceIter>fn(n);
+    size_t size = sizeof(HalfEdges) * n;
+    HalfEdges* hc = (HalfEdges*)_alloca(size);
+    memset(hc, 0, size);
+    size = sizeof(EdgeIter) * n;
+    EdgeIter* ec = (EdgeIter*)_alloca(size);
+    memset(ec, 0, size);
+    //    vector<HalfEdges>hc(n);
+    size = sizeof(FaceIter) * n;
+    FaceIter* fn = (FaceIter*)_alloca(size);
+    memset(fn, 0, size);
+    //    vector< FaceIter>fn(n);
     HalfedgeIter halfedge = hc0_1;
     for (int i = 0; i < n; i++) {
       hc[i].h1 = halfedge;
       HalfedgeIter halfedgeTwin = halfedge->twin();
       hc[i].h0 = halfedgeTwin;
-
+      ec[i] = hc[i].h0->edge();
       fn[i] = hc[i].h0->face();
 
       halfedge = halfedgeTwin->next();
@@ -537,19 +540,19 @@ namespace CS248 {
 
     //Allocate new elements
     //halfedges
-//     size = sizeof(HalfEdges) * n;
-//     HalfEdges* hi = (HalfEdges*)_alloca(size);
-//     memset(hi, 0, size);
-    vector< HalfEdges>hi(n);
-//     size = sizeof(VertexIter) * n;
-//     VertexIter* vi = (VertexIter*)_alloca(size);
-//     memset(vi, 0, size);
-    vector< VertexIter>vi(n);
+    size = sizeof(HalfEdges) * n;
+    HalfEdges* hi = (HalfEdges*)_alloca(size);
+    memset(hi, 0, size);
+    //    vector< HalfEdges>hi(n);
+    size = sizeof(VertexIter) * n;
+    VertexIter* vi = (VertexIter*)_alloca(size);
+    memset(vi, 0, size);
+    //    vector< VertexIter>vi(n);
     Vector3D pos = v->position;
-//     size = sizeof(EdgeIter) * n;
-//     EdgeIter* ei = (EdgeIter*)_alloca(size);
-//     memset(ei, 0, size);
-    vector< EdgeIter>ei(n);
+    size = sizeof(EdgeIter) * n;
+    EdgeIter* ei = (EdgeIter*)_alloca(size);
+    memset(ei, 0, size);
+//    vector< EdgeIter>ei(n);
     for (int i = 0; i < n; i++) {
       hi[i].h0 = newHalfedge();
       hi[i].h1 = newHalfedge();
@@ -584,6 +587,16 @@ namespace CS248 {
     }
 
     f->halfedge() = hi[0].h0;
+    for (int i = 0; i < n; i++) {
+      hc[i].h0.HalfedgeIter::~HalfedgeIter();
+      hc[i].h1.HalfedgeIter::~HalfedgeIter();
+      hi[i].h0.HalfedgeIter::~HalfedgeIter();
+      hi[i].h1.HalfedgeIter::~HalfedgeIter();
+      ec[i].EdgeIter::~EdgeIter();
+      fn[i].FaceIter::~FaceIter();
+      vi[i].VertexIter::~VertexIter();
+      ei[i].EdgeIter::~EdgeIter();
+    }
     return f;
   }
 
