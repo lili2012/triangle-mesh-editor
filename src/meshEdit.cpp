@@ -602,14 +602,14 @@ namespace CS248 {
 
   FaceIter HalfedgeMesh::bevelEdge(EdgeIter e) {
     // *** Extra Credit ***
-    // TODO This method should replace the edge e with a face, corresponding to a
+    // This method should replace the edge e with a face, corresponding to a
     // bevel operation. It should return the new face.  NOTE: This method is
     // responsible for updating the *connectivity* of the mesh only---it does not
     // need to update the vertex positions.  These positions will be updated in
     // HalfedgeMesh::bevelEdgeComputeNewPositions (which you also have to
     // implement!)
 
-    showError("bevelEdge() not implemented.");
+    
     return facesBegin();
   }
 
@@ -831,8 +831,6 @@ namespace CS248 {
       up.normalize();
       newHalfedges[i]->vertex()->position += (bisector * normalShift * sina + up * tangentialInset);
     }
-
-
   }
 
   void HalfedgeMesh::bevelVertexComputeNewPositions(
