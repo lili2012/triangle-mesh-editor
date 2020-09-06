@@ -853,18 +853,9 @@ namespace CS248 {
 
       //Vector3D pos = halfedge->vertex()->position;
       Vector3D vec = originalVertexPosition - pos;
-      vec.normalize();
-      norm += vec;
-    }
-    norm.normalize();
-
-    for (auto& halfedge : newHalfedges) {
-      Vector3D pos = halfedge->twin()->vertex()->position;
-      Vector3D vec = pos - originalVertexPosition;
-      double proj = dot(vec, norm);
-      double frac = tangentialInset / proj;
-
-      halfedge->vertex()->position += vec * frac;
+      double length = vec.norm()* tangentialInset;
+      Vector3D dir = vec.unit()*length;
+      halfedge->vertex()->position += dir;
     }
 
   }
