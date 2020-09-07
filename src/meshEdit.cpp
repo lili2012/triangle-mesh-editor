@@ -778,6 +778,21 @@ namespace CS248 {
       face->halfedge() = h[i].h0;
     }
     f->halfedge() = hi[0].h0;
+
+    for (int i = 0; i < n; i++) {
+      h[i].h0.HalfedgeIter::~HalfedgeIter();
+      h[i].h1.HalfedgeIter::~HalfedgeIter();
+      hi[i].h0.HalfedgeIter::~HalfedgeIter();
+      hi[i].h1.HalfedgeIter::~HalfedgeIter();
+      hc[i].h0.HalfedgeIter::~HalfedgeIter();
+      hc[i].h1.HalfedgeIter::~HalfedgeIter();
+      ei[i].EdgeIter::~EdgeIter();
+      ec[i].EdgeIter::~EdgeIter();
+      fn[i].FaceIter::~FaceIter();
+      v[i].VertexIter::~VertexIter();
+      vi[i].VertexIter::~VertexIter();
+      e[i].EdgeIter::~EdgeIter();
+    }
     return f;
   }
 
