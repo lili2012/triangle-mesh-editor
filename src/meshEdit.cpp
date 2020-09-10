@@ -617,76 +617,90 @@ namespace CS248 {
       HalfedgeIter h0;
       HalfedgeIter h1;
     };
-
+    int n0 = v0->degree();
+    int n1 = v1->degree();
+    int n = n0 + n1 - 2;
     //collect em, hm, fm
-    int m = v1->degree();
-    int n = v1->degree();
+    vector<HalfEdges> hm(n);
+    vector<EdgeIter> em(n);
+    vector<FaceIter> fm(n);
 
-
-
-    vector<HalfEdges> hm(m - 1);
-    vector<VertexIter> vm(m - 1);
-    vector<EdgeIter> em(m - 1);
     HalfedgeIter hs = h0;
-    for (int i = 0; i < m - 1; i++) {
+    for (int i = 0; i < n1 - 1; i++) {
       HalfedgeIter next = hs->next();
       HalfedgeIter twin = next->twin();
-      em[i] = next->edge();
       hm[i].h0 = next;
       hm[i].h1 = twin;
+      em[i] = next->edge();
+      fm[i] = hs->face();
       hs = twin;
     }
-    //collect fp
-    FaceIter fp0 = h0->face();
-    FaceIter fp1 = h1->face();
-    //collect fm
-    vector<FaceIter> fm(m - 2);
-    for (int i = 0; i < m - 2; i++) {
-      fm[i] = hm[i].h1->face();
-    }
 
-    //collect vn, hn
-
-    vector<HalfEdges> hn(n - 1);
-    vector<VertexIter> vn(n - 1);
-    vector<EdgeIter> en(n - 1);
     hs = h1;
-    for (int i = 0; i < n - 1; i++) {
+    for (int i = n1 - 1; i < n; i++) {
       HalfedgeIter next = hs->next();
       HalfedgeIter twin = next->twin();
-      en[i] = next->edge();
-      hn[i].h0 = next;
-      hn[i].h1 = twin;
+      hm[i].h0 = next;
+      hm[i].h1 = twin;
+      em[i] = next->edge();
+      fm[i] = hs->face();
       hs = twin;
     }
-    //collect fn
-    vector<FaceIter> fn(n - 2);
-    for (int i = 0; i < n - 2; i++) {
-      fn[i] = hn[i].h1->face();
-    }
+
     //allocate new face
     FaceIter f = newFace();
     //edge
-    vector<EdgeIter> ec(2);
-    ec[0] = e;
-    ec[1] = newEdge();
+    vector<EdgeIter> en(n);
+    vector<HalfEdges> hn(n);
+    en[0] = e;
+    hn[0].h0 = h0;
+    hn[0].h1 = h1;
+    for (int i = 1; i < n; i++) {
+      en[i] = newEdge();
+      hn[i].h0 = newHalfedge();
+      hn[i].h1 = newHalfedge();
+    }
 
-    vector<EdgeIter> ea(m - 2);
-    for (int i = 0; i < m - 2; i++) {
-      ea[i] = newEdge();
-    }
-    vector<EdgeIter> eb(n - 2);
-    for (int i = 0; i < n - 2; i++) {
-      eb[i] = newEdge();
-    }
     //vertex
+    vector<VertexIter> vn(n);
+    vn[0] = v0;
+    vn[1] = v1;
+    for (int i = 2; i < n; i++) {
+      vn[i] = newVertex();
+    }
 
+    //reassign
+    for (int i = 0; i < n; i++) {
+      int iprev = prev(i, n);
+      int iprevprev = prev(iprev, n);
+      int inext = next(i, n);
+      int inextnext = next(inext, n);
+      vn[i]->halfedge() = hn[iprev].h0;
+      en[i]->halfedge() = hn[i].h0;
+      fm[i]->halfedge() = hn[i].h0;
 
-    return facesBegin();
+      hm[i].h0->twin() = hm[i].h1;
+      hm[i].h1->twin() = hm[i].h0;
+      hn[i].h0->twin() = hn[i].h1;
+      hn[i].h1->twin() = hn[i].h0;
+
+      hm[i].h1->next() = hn[inext].h0;
+      hn[i].h0->next() = hm[i].h0;
+      hn[i].h1->next() = hn[iprev].h0;
+
+      hm[i].h0->vertex() = vn[inextnext];
+      hn[i].h0->vertex() = vn[inext];
+      hn[i].h1->vertex() = vn[inextnext];
+
+      hn[i].h0->edge() = en[i];
+      hn[i].h1->edge() = en[i];
+
+      hn[i].h0->face() = fm[i];
+      hn[i].h1->face() = f;
+    }
+
+    return f;
   }
-
-
-
 
   FaceIter HalfedgeMesh::bevelFace(FaceIter f) {
     // *** Extra Credit ***
@@ -949,7 +963,7 @@ namespace CS248 {
     vector<Vector3D>& originalVertexPositions,
     vector<HalfedgeIter>& newHalfedges, double tangentialInset) {
     // *** Extra Credit ***
-    // TODO Compute new vertex positions for the vertices of the beveled edge.
+    // Compute new vertex positions for the vertices of the beveled edge.
     //
     // These vertices can be accessed via newHalfedges[i]->vertex()->position for
     // i = 1, ..., newHalfedges.size()-1.
