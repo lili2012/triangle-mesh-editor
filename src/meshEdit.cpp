@@ -649,6 +649,7 @@ namespace CS248 {
 
     //allocate new face
     FaceIter f = newFace();
+
     //edge
     vector<EdgeIter> en(n);
     vector<HalfEdges> hn(n);
@@ -686,7 +687,7 @@ namespace CS248 {
 
       hm[i].h1->next() = hn[inext].h0;
       hn[i].h0->next() = hm[i].h0;
-      hn[i].h1->next() = hn[iprev].h0;
+      hn[i].h1->next() = hn[iprev].h1;
 
       hm[i].h0->vertex() = vn[inextnext];
       hn[i].h0->vertex() = vn[inext];
@@ -699,6 +700,14 @@ namespace CS248 {
       hn[i].h1->face() = f;
     }
 
+    for (int i = 0; i < n1 - 1; i++) {
+      hm[i].h0->vertex()->position = v1->position;
+    }
+    for (int i = n1-1; i < n ; i++) {
+      hm[i].h0->vertex()->position = v0->position;
+    }
+
+    f->halfedge() = hn[0].h1;
     return f;
   }
 
@@ -946,7 +955,6 @@ namespace CS248 {
     // The basic strategy here is to loop over the list of outgoing halfedges,
     // and use the preceding and next vertex position from the original mesh
     // (in the orig array) to compute an offset vertex position.
-    Vector3D norm;
     for (auto& halfedge : newHalfedges) {
       Vector3D pos = halfedge->twin()->vertex()->position;
 
@@ -975,13 +983,17 @@ namespace CS248 {
     // Note that there is a 1-to-1 correspondence between halfedges in
     // newHalfedges and vertex positions
     // in orig.  So, you can write loops of the form
-    //
-    // for( int i = 0; i < newHalfedges.size(); i++ )
-    // {
-    //    Vector3D pi = originalVertexPositions[i]; // get the original vertex
-    //    position correponding to vertex i
-    // }
-    //
+
+    for (int i = 0; i < newHalfedges.size(); i++) {
+      HalfedgeIter halfedge = newHalfedges[i];
+      Vector3D pos = halfedge->twin()->vertex()->position;
+      Vector3D pi = originalVertexPositions[i];
+      //Vector3D pos = halfedge->vertex()->position;
+      Vector3D vec = pi - pos;
+      double length = vec.norm() * tangentialInset;
+      Vector3D dir = vec.unit() * length;
+      halfedge->vertex()->position += dir;
+    }
 
   }
 
