@@ -4,6 +4,20 @@
 #include "mutablePriorityQueue.h"
 #include "error_dialog.h"
 
+struct HalfEdges {
+  HalfedgeIter h0;
+  HalfedgeIter h1;
+};
+
+bool isInTriangle(HalfedgeIter h)
+{
+  HalfedgeIter next = h;
+  for (int i = 0; i < 3; i++) {
+    next = next->next();
+  }
+  return next == h;
+}
+
 namespace CS248 {
   //see splitEdge.dwg for annotation
   VertexIter HalfedgeMesh::splitEdge(EdgeIter e0) {
@@ -138,14 +152,87 @@ namespace CS248 {
     return v4;
   }
 
-  VertexIter HalfedgeMesh::collapseEdge(EdgeIter e) {
+  VertexIter HalfedgeMesh::collapseEdge(EdgeIter e0) {
     // *** Extra Credit ***
-    // TODO: (meshEdit)
     // This method should collapse the given edge and return an iterator to
     // the new vertex created by the collapse.
+    HalfedgeIter h0 = e0->halfedge();
+    HalfedgeIter h1 = h0->twin();
+    VertexIter v0 = h0->vertex();
+    VertexIter v1 = h1->vertex();
+    int n0 = v0->degree() - 1;
+    int n1 = v1->degree() - 1;
+    Vector3D midpt = (v1->position + v0->position) / 2;
+    bool ish0InTriangle = isInTriangle(h0);
+    bool ish1InTriangle = isInTriangle(h1);
+    if (ish0InTriangle) {
+      n0--;
+    }
+    if (ish1InTriangle) {
+      n1--;
+    }
+    //collect e, h, f
+    vector<EdgeIter> e(n0 + n1);
+    vector<HalfEdges>h(n0 + n1);
+    vector<FaceIter>f(n0 + n1);
+    HalfedgeIter hs = h1->next();
+    for (int i = 0; i < n0; i++) {
+      HalfedgeIter ht = hs->twin();
+      h[i].h0 = hs;
+      h[i].h1 = ht;
+      f[i] = ht->face();
+      e[i] = hs->edge();
+      hs = ht->next();
+    }
 
-    showError("collapseEdge() not implemented.");
-    return VertexIter();
+    hs = h0->next();
+    for (int i = n0; i < n0+n1 ; i++) {
+      HalfedgeIter ht = hs->twin();
+      h[i].h0 = hs;
+      h[i].h1 = ht;
+      f[i] = ht->face();
+      e[i] = hs->edge();
+      hs = ht->next();
+    }
+    //delete vertex, halfedge, face
+    deleteVertex(v1);
+    if (ish0InTriangle) {
+      FaceIter f0 = h0->face();
+      deleteFace(f0);
+      HalfedgeIter next = h0->next();
+      HalfedgeIter nextNext = next->next();//to be deleted
+      HalfedgeIter nextNextTwin = nextNext->twin();//to be deleted
+      VertexIter vp = nextNext->vertex();
+      vp->halfedge() = next->twin();
+      HalfedgeIter nextNextTwinNext = nextNextTwin->next();
+      next->next() = nextNextTwinNext;
+      EdgeIter edge = nextNext->edge();
+      deleteEdge(edge);
+      deleteHalfedge(nextNext);
+      deleteHalfedge(nextNextTwin);
+    }
+    if (ish1InTriangle) {
+      FaceIter f1 = h1->face();
+      deleteFace(f1);
+      HalfedgeIter next = h1->next();
+      HalfedgeIter nextNext = next->next();//to be deleted
+      HalfedgeIter nextNextTwin = nextNext->twin();//to be deleted
+      VertexIter vp = nextNext->vertex();
+      vp->halfedge() = next->twin();
+      HalfedgeIter nextNextTwinNext = nextNextTwin->next();
+      next->next() = nextNextTwinNext;
+      EdgeIter edge = nextNext->edge();
+      deleteEdge(edge);
+      deleteHalfedge(nextNext);
+      deleteHalfedge(nextNextTwin);
+    }
+    //reconnect halfedge->next, halfedge->face, face->halfedge
+
+
+
+    v0->halfedge() = h[0].h0;
+    v0->position = midpt;
+    return v0;
   }
 
   VertexIter HalfedgeMesh::collapseFace(FaceIter f) {
@@ -511,10 +598,7 @@ namespace CS248 {
     // implement!)
     int n = v->degree();
     HalfedgeIter hc0_1 = v->halfedge();
-    struct HalfEdges {
-      HalfedgeIter h0;
-      HalfedgeIter h1;
-    };
+
     //collect elements
     size_t size = sizeof(HalfEdges) * n;
     HalfEdges* hc = (HalfEdges*)_alloca(size);
@@ -613,10 +697,6 @@ namespace CS248 {
     VertexIter v0 = h0->vertex();
     VertexIter v1 = h1->vertex();
 
-    struct HalfEdges {
-      HalfedgeIter h0;
-      HalfedgeIter h1;
-    };
     int n0 = v0->degree();
     int n1 = v1->degree();
     int n = n0 + n1 - 2;
@@ -703,7 +783,7 @@ namespace CS248 {
     for (int i = 0; i < n1 - 1; i++) {
       hm[i].h0->vertex()->position = v1->position;
     }
-    for (int i = n1-1; i < n ; i++) {
+    for (int i = n1 - 1; i < n; i++) {
       hm[i].h0->vertex()->position = v0->position;
     }
 
@@ -722,10 +802,7 @@ namespace CS248 {
     // implement!)
     int n = f->degree();
     HalfedgeIter h0_0 = f->halfedge();
-    struct HalfEdges {
-      HalfedgeIter h0;
-      HalfedgeIter h1;
-    };
+
     //collect elements
     size_t size = sizeof(VertexIter) * n;
     VertexIter* v = (VertexIter*)_alloca(size);
