@@ -9,13 +9,22 @@ struct HalfEdges {
   HalfedgeIter h1;
 };
 
-bool isInTriangle(HalfedgeIter h)
+static bool isInTriangle(HalfedgeIter h)
 {
   HalfedgeIter next = h;
   for (int i = 0; i < 3; i++) {
     next = next->next();
   }
   return next == h;
+}
+
+static inline int prev(int i, int n)
+{
+  return (i + n - 1) % n;
+}
+static inline int next(int i, int n)
+{
+  return (i + 1) % n;
 }
 
 namespace CS248 {
@@ -171,10 +180,11 @@ namespace CS248 {
     if (ish1InTriangle) {
       n1--;
     }
+    int n = n0 + n1;
     //collect e, h, f
-    vector<EdgeIter> e(n0 + n1);
-    vector<HalfEdges>h(n0 + n1);
-    vector<FaceIter>f(n0 + n1);
+    vector<EdgeIter> e(n);
+    vector<HalfEdges>h(n);
+    vector<FaceIter>f(n);
     HalfedgeIter hs = h1->next();
     for (int i = 0; i < n0; i++) {
       HalfedgeIter ht = hs->twin();
@@ -186,7 +196,7 @@ namespace CS248 {
     }
 
     hs = h0->next();
-    for (int i = n0; i < n0+n1 ; i++) {
+    for (int i = n0; i < n; i++) {
       HalfedgeIter ht = hs->twin();
       h[i].h0 = hs;
       h[i].h1 = ht;
@@ -226,9 +236,16 @@ namespace CS248 {
       deleteHalfedge(nextNext);
       deleteHalfedge(nextNextTwin);
     }
-    //reconnect halfedge->next, halfedge->face, face->halfedge
-
-
+    //reconnect halfedge->next, halfedge->face,h[i].h0->vertex, face->halfedge
+    for (int i = 0; i < n; i++) {
+      int inext = next(i, n);
+      int iprev = prev(i, n);
+      h[i].h1->next() = h[inext].h0;
+      h[i].h0->face() = f[iprev];
+      h[i].h1->face() = f[i];
+      h[i].h0->vertex() = v0;
+      f[i]->halfedge() = h[i].h1;
+    }
 
     v0->halfedge() = h[0].h0;
     v0->position = midpt;
@@ -579,14 +596,7 @@ namespace CS248 {
     }
   }
 
-  static inline int prev(int i, int n)
-  {
-    return (i + n - 1) % n;
-  }
-  static inline int next(int i, int n)
-  {
-    return (i + 1) % n;
-  }
+
 
   FaceIter HalfedgeMesh::bevelVertex(VertexIter v) {
     // *** Extra Credit ***
