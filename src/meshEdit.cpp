@@ -161,6 +161,24 @@ namespace CS248 {
     return v4;
   }
 
+
+  void rearrange(HalfedgeIter h, HalfedgeMesh&mesh)
+  {
+    FaceIter f0 = h->face();
+    mesh.deleteFace(f0);
+    HalfedgeIter next = h->next();
+    HalfedgeIter nextNext = next->next();//to be deleted
+    HalfedgeIter nextNextTwin = nextNext->twin();//to be deleted
+    VertexIter vp = nextNext->vertex();
+    vp->halfedge() = next->twin();
+    HalfedgeIter nextNextTwinNext = nextNextTwin->next();
+    next->next() = nextNextTwinNext;
+    EdgeIter edge = nextNext->edge();
+    mesh.deleteEdge(edge);
+    mesh.deleteHalfedge(nextNext);
+    mesh.deleteHalfedge(nextNextTwin);
+  }
+
   VertexIter HalfedgeMesh::collapseEdge(EdgeIter e0) {
     // *** Extra Credit ***
     // This method should collapse the given edge and return an iterator to
@@ -207,34 +225,11 @@ namespace CS248 {
     //delete vertex, halfedge, face
     deleteVertex(v1);
     if (ish0InTriangle) {
-      FaceIter f0 = h0->face();
-      deleteFace(f0);
-      HalfedgeIter next = h0->next();
-      HalfedgeIter nextNext = next->next();//to be deleted
-      HalfedgeIter nextNextTwin = nextNext->twin();//to be deleted
-      VertexIter vp = nextNext->vertex();
-      vp->halfedge() = next->twin();
-      HalfedgeIter nextNextTwinNext = nextNextTwin->next();
-      next->next() = nextNextTwinNext;
-      EdgeIter edge = nextNext->edge();
-      deleteEdge(edge);
-      deleteHalfedge(nextNext);
-      deleteHalfedge(nextNextTwin);
+      rearrange(h0, *this);
+
     }
     if (ish1InTriangle) {
-      FaceIter f1 = h1->face();
-      deleteFace(f1);
-      HalfedgeIter next = h1->next();
-      HalfedgeIter nextNext = next->next();//to be deleted
-      HalfedgeIter nextNextTwin = nextNext->twin();//to be deleted
-      VertexIter vp = nextNext->vertex();
-      vp->halfedge() = next->twin();
-      HalfedgeIter nextNextTwinNext = nextNextTwin->next();
-      next->next() = nextNextTwinNext;
-      EdgeIter edge = nextNext->edge();
-      deleteEdge(edge);
-      deleteHalfedge(nextNext);
-      deleteHalfedge(nextNextTwin);
+      rearrange(h1, *this);
     }
     //reconnect halfedge->next, halfedge->face,h[i].h0->vertex, face->halfedge
     for (int i = 0; i < n; i++) {
@@ -249,6 +244,9 @@ namespace CS248 {
 
     v0->halfedge() = h[0].h0;
     v0->position = midpt;
+    deleteEdge(e0);
+    deleteHalfedge(h0);
+    deleteHalfedge(h1);
     return v0;
   }
 
