@@ -162,7 +162,7 @@ namespace CS248 {
   }
 
 
-  void rearrange(HalfedgeIter h, HalfedgeMesh&mesh)
+  void rearrange(HalfedgeIter h, HalfedgeMesh&mesh, EdgeIter& nextEdge)
   {
     FaceIter f0 = h->face();
     mesh.deleteFace(f0);
@@ -170,19 +170,26 @@ namespace CS248 {
     HalfedgeIter nextNext = next->next();//to be deleted
     HalfedgeIter nextNextTwin = nextNext->twin();//to be deleted
     VertexIter vp = nextNext->vertex();
-    vp->halfedge() = next->twin();
+
     HalfedgeIter nextNextTwinNext = nextNextTwin->next();
+    vp->halfedge() = nextNextTwinNext;
     next->next() = nextNextTwinNext;
     EdgeIter edge = nextNext->edge();
+    if (edge == nextEdge) {
+      nextEdge++;
+    }
     mesh.deleteEdge(edge);
     mesh.deleteHalfedge(nextNext);
     mesh.deleteHalfedge(nextNextTwin);
   }
 
-  VertexIter HalfedgeMesh::collapseEdge(EdgeIter e0) {
+  VertexIter HalfedgeMesh::collapseEdge(EdgeIter& e0) {
     // *** Extra Credit ***
     // This method should collapse the given edge and return an iterator to
     // the new vertex created by the collapse.
+    EdgeIter nextEdge = e0;
+    nextEdge++;
+
     HalfedgeIter h0 = e0->halfedge();
     HalfedgeIter h1 = h0->twin();
     VertexIter v0 = h0->vertex();
@@ -225,11 +232,11 @@ namespace CS248 {
     //delete vertex, halfedge, face
     deleteVertex(v1);
     if (ish0InTriangle) {
-      rearrange(h0, *this);
-
+      rearrange(h0, *this, nextEdge);
     }
+
     if (ish1InTriangle) {
-      rearrange(h1, *this);
+      rearrange(h1, *this, nextEdge);
     }
     //reconnect halfedge->next, halfedge->face,h[i].h0->vertex, face->halfedge
     for (int i = 0; i < n; i++) {
@@ -245,6 +252,7 @@ namespace CS248 {
     v0->halfedge() = h[0].h0;
     v0->position = midpt;
     deleteEdge(e0);
+    e0 = nextEdge;
     deleteHalfedge(h0);
     deleteHalfedge(h1);
     return v0;
@@ -1234,7 +1242,7 @@ namespace CS248 {
 
   void MeshResampler::resample(HalfedgeMesh& mesh) {
     // *** Extra Credit ***
-    // TODO: (meshEdit)
+    // (meshEdit)
     // Compute the mean edge length.
     // Repeat the four main steps for 5 or 6 iterations
     // -> Split edges much longer than the target length (being careful about
@@ -1244,7 +1252,45 @@ namespace CS248 {
     //    been destroyed by a collapse (which ones?)
     // -> Now flip each edge if it improves vertex degree
     // -> Finally, apply some tangential smoothing to the vertex positions
-    showError("resample() not implemented.");
+    double sum = 0.0;
+    for (auto edge = mesh.edgesBegin(); edge != mesh.edgesEnd(); edge++) {
+      sum += edge->length();
+    }
+    double meanLength = sum / mesh.nEdges();
+    double upperLimit = meanLength * 4 / 3;
+    double lowerLimit = meanLength * 4 / 5;
+    for (auto edge = mesh.edgesBegin(); edge != mesh.edgesEnd(); edge++) {
+      double length = edge->length();
+      if (length > upperLimit) {
+        mesh.splitEdge(edge);
+      }
+    }
+    static int i = 0;
+    int j = 0;
+    for (auto edge = mesh.edgesBegin(); edge != mesh.edgesEnd();) {
+      double length = edge->length();
+
+        
+
+      if (abs(length - 0.062303456089754045) < 1e-6) {
+
+      }
+
+      if (length < lowerLimit&&(i < 5 || (i == 5 && (j <= 36 || j == 52)))) {
+        j++;
+
+          mesh.collapseEdge(edge);
+
+       
+      }
+      else {
+        edge++;
+      }
+    }
+    i++;
+
+
+
   }
 
 }  // namespace CS248

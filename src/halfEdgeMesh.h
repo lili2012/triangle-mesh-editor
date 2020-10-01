@@ -924,11 +924,12 @@ class HalfedgeMesh {
    */
   VertexIter splitEdge(EdgeIter e);
 
+  
   /**
    * Collapse an edge, returning a pointer to the collapsed vertex
+   * NEXT is e0's next edge element in mesh.edges.
    */
-  VertexIter collapseEdge(EdgeIter e);
-
+  VertexIter collapseEdge(EdgeIter& e);
   /**
    * Collapse a face, returning a pointer to the collapsed vertex
    */
