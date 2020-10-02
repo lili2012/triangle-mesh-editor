@@ -1276,57 +1276,60 @@ namespace CS248 {
     double meanLength = sum / mesh.nEdges();
     double upperLimit = meanLength * 4 / 3;
     double lowerLimit = meanLength * 4 / 5;
-    for (auto edge = mesh.edgesBegin(); edge != mesh.edgesEnd(); edge++) {
-      double length = edge->length();
-      if (length > upperLimit) {
-        mesh.splitEdge(edge);
+
+    for (int i = 0; i < 5; i++) {
+      for (auto edge = mesh.edgesBegin(); edge != mesh.edgesEnd(); edge++) {
+        double length = edge->length();
+        if (length > upperLimit) {
+          mesh.splitEdge(edge);
+        }
       }
-    }
 
 
-    for (auto edge = mesh.edgesBegin(); edge != mesh.edgesEnd();) {
-      double length = edge->length();
-      if (length < lowerLimit) {
-        mesh.collapseEdge(edge);
+      for (auto edge = mesh.edgesBegin(); edge != mesh.edgesEnd();) {
+        double length = edge->length();
+        if (length < lowerLimit) {
+          mesh.collapseEdge(edge);
+        }
+        else {
+          edge++;
+        }
       }
-      else {
-        edge++;
+      //flip
+      for (auto edge = mesh.edgesBegin(); edge != mesh.edgesEnd();) {
+        auto oldEdge = edge++;
+        auto h0 = oldEdge->halfedge();
+        auto h1 = h0->twin();
+        auto v0 = h0->vertex();
+        auto v1 = h1->vertex();
+        int a0 = v0->degree();
+        int a1 = v1->degree();
+        auto ch0 = h0->next()->next();
+        auto ch1 = h1->next()->next();
+        auto cv0 = ch0->vertex();
+        auto cv1 = ch1->vertex();
+        int b0 = cv0->degree();
+        int b1 = cv1->degree();
+        int div0 = abs(a0 - 6) + abs(a1 - 6) + abs(b0 - 6) + abs(b1 - 6);
+        int div1 = abs(a0 - 1 - 6) + abs(a1 - 1 - 6) + abs(b0 + 1 - 6) + abs(b1 + 1 - 6);
+        if (div1 < div0) {
+          mesh.flipEdge(oldEdge);
+        }
       }
-    }
-    //flip
-    for (auto edge = mesh.edgesBegin(); edge != mesh.edgesEnd();) {
-      auto oldEdge = edge++;
-      auto h0 = oldEdge->halfedge();
-      auto h1 = h0->twin();
-      auto v0 = h0->vertex();
-      auto v1 = h1->vertex();
-      int a0 = v0->degree();
-      int a1 = v1->degree();
-      auto ch0 = h0->next()->next();
-      auto ch1 = h1->next()->next();
-      auto cv0 = ch0->vertex();
-      auto cv1 = ch1->vertex();
-      int b0 = cv0->degree();
-      int b1 = cv1->degree();
-      int div0 = abs(a0 - 6) + abs(a1 - 6) + abs(b0 - 6) + abs(b1 - 6);
-      int div1 = abs(a0 - 1 - 6) + abs(a1 - 1 - 6) + abs(b0 + 1 - 6) + abs(b1 + 1 - 6);
-      if (div1 < div0) {
-        mesh.flipEdge(oldEdge);
+      //computer new vertex position
+      for (auto vertex = mesh.verticesBegin(); vertex != mesh.verticesEnd(); vertex++) {
+        Vector3D c = vertex->neighborhoodCentroid();
+        Vector3D p = vertex->position;
+        Vector3D v = c - p;
+        Vector3D N = vertex->normal();
+        v = v - dot(N, v) * N;
+        vertex->newPosition = p + 1.0 / 5 * v;
       }
-    }
-    //computer new vertex position
-    for (auto vertex = mesh.verticesBegin(); vertex != mesh.verticesEnd(); vertex++) {
-      Vector3D c = vertex->neighborhoodCentroid();
-      Vector3D p = vertex->position;
-      Vector3D v = c - p;
-      Vector3D N = vertex->normal();
-      v = v - dot(N, v) * N;
-      vertex->newPosition = p + 1.0 / 5 * v;
-    }
-    for (auto vertex = mesh.verticesBegin(); vertex != mesh.verticesEnd(); vertex++) {
-      vertex->position = vertex->newPosition;
-    }
+      for (auto vertex = mesh.verticesBegin(); vertex != mesh.verticesEnd(); vertex++) {
+        vertex->position = vertex->newPosition;
+      }
 
+    }
   }
 
 }  // namespace CS248
