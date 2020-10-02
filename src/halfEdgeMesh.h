@@ -579,6 +579,8 @@ class Vertex : public HalfedgeElement {
    */
   virtual Info getInfo();
 
+  std::set<VertexCIter> getNeighbors()const;
+
   /**
    * Get all vertices that are at most depth away from this vertex, storing in
    * seen.

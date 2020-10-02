@@ -1,6 +1,6 @@
 #include "halfEdgeMesh.h"
 #include <sstream>
-
+#include <set>
 #include "error_dialog.h"
 
 namespace CS248 {
@@ -847,6 +847,21 @@ Info Vertex::getInfo() {
   info.push_back(m6.str());
 
   return info;
+}
+
+set<CS248::VertexCIter> Vertex::getNeighbors() const
+{
+  set<VertexCIter> neighbors;
+  HalfedgeCIter hs = this->halfedge();
+  HalfedgeCIter h = hs;
+  while (true) {
+    HalfedgeCIter twin = h->twin();
+    VertexCIter v = twin->vertex();
+    neighbors.insert(v);
+    h = twin->next();
+    if (h == hs) break;
+  }
+  return neighbors;
 }
 
 Info Edge::getInfo() {

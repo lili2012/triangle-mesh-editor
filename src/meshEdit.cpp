@@ -3,6 +3,7 @@
 #include "meshEdit.h"
 #include "mutablePriorityQueue.h"
 #include "error_dialog.h"
+#include <set>
 
 struct HalfEdges {
   HalfedgeIter h0;
@@ -162,7 +163,7 @@ namespace CS248 {
   }
 
 
-  void rearrange(HalfedgeIter h, HalfedgeMesh&mesh, EdgeIter& nextEdge)
+  void rearrange(HalfedgeIter h, HalfedgeMesh& mesh, EdgeIter& nextEdge)
   {
     FaceIter f0 = h->face();
     mesh.deleteFace(f0);
@@ -199,6 +200,22 @@ namespace CS248 {
     Vector3D midpt = (v1->position + v0->position) / 2;
     bool ish0InTriangle = isInTriangle(h0);
     bool ish1InTriangle = isInTriangle(h1);
+
+    //check connectivity
+  //https://stackoverflow.com/questions/27049163/mesh-simplification-edge-collapse-conditions/27049418
+
+    set<VertexCIter> vset0 = v0->getNeighbors();
+    set<VertexCIter> vset1 = v1->getNeighbors();
+    set<VertexCIter> intersection;
+
+    set_intersection(vset0.begin(), vset0.end(), vset1.begin(), vset1.end(),
+      std::inserter(intersection, intersection.begin()));
+    int intersectCountShouldBe = (int)ish0InTriangle + (int)ish1InTriangle;
+    if (intersection.size() > intersectCountShouldBe) {
+      e0 = nextEdge;
+      return VertexIter();
+    }
+
     if (ish0InTriangle) {
       n0--;
     }
@@ -1265,31 +1282,50 @@ namespace CS248 {
         mesh.splitEdge(edge);
       }
     }
-    static int i = 0;
-    int j = 0;
+
+
     for (auto edge = mesh.edgesBegin(); edge != mesh.edgesEnd();) {
       double length = edge->length();
-
-        
-
-      if (abs(length - 0.062303456089754045) < 1e-6) {
-
-      }
-
-      if (length < lowerLimit&&(i < 5 || (i == 5 && (j <= 36 || j == 52)))) {
-        j++;
-
-          mesh.collapseEdge(edge);
-
-       
+      if (length < lowerLimit) {
+        mesh.collapseEdge(edge);
       }
       else {
         edge++;
       }
     }
-    i++;
-
-
+    //flip
+    for (auto edge = mesh.edgesBegin(); edge != mesh.edgesEnd();) {
+      auto oldEdge = edge++;
+      auto h0 = oldEdge->halfedge();
+      auto h1 = h0->twin();
+      auto v0 = h0->vertex();
+      auto v1 = h1->vertex();
+      int a0 = v0->degree();
+      int a1 = v1->degree();
+      auto ch0 = h0->next()->next();
+      auto ch1 = h1->next()->next();
+      auto cv0 = ch0->vertex();
+      auto cv1 = ch1->vertex();
+      int b0 = cv0->degree();
+      int b1 = cv1->degree();
+      int div0 = abs(a0 - 6) + abs(a1 - 6) + abs(b0 - 6) + abs(b1 - 6);
+      int div1 = abs(a0 - 1 - 6) + abs(a1 - 1 - 6) + abs(b0 + 1 - 6) + abs(b1 + 1 - 6);
+      if (div1 < div0) {
+        mesh.flipEdge(oldEdge);
+      }
+    }
+    //computer new vertex position
+    for (auto vertex = mesh.verticesBegin(); vertex != mesh.verticesEnd(); vertex++) {
+      Vector3D c = vertex->neighborhoodCentroid();
+      Vector3D p = vertex->position;
+      Vector3D v = c - p;
+      Vector3D N = vertex->normal();
+      v = v - dot(N, v) * N;
+      vertex->newPosition = p + 1.0 / 5 * v;
+    }
+    for (auto vertex = mesh.verticesBegin(); vertex != mesh.verticesEnd(); vertex++) {
+      vertex->position = vertex->newPosition;
+    }
 
   }
 

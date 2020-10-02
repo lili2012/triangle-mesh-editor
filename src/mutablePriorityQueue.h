@@ -59,7 +59,7 @@
 
 #ifndef CS248_CAMERA_H
 #define CS248_CAMERA_H
-
+#include <set>
 namespace CS248 {
 
 template <class T>
@@ -78,7 +78,7 @@ class MutablePriorityQueue {
   void pop(void) { queue.erase(queue.begin()); }
 
  protected:
-  set<T> queue;
+  std::set<T> queue;
 };
 
 }  // namespace CS248
