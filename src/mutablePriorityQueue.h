@@ -67,10 +67,12 @@ class MutablePriorityQueue {
  public:
   void insert(const T& item) { queue.insert(item); }
 
-  void remove(const T& item) {
+  bool remove(const T& item) {
+    bool removed = false;
     if (queue.find(item) != queue.end()) {
-      queue.erase(item);
+      removed = (bool)queue.erase(item);
     }
+    return removed;
   }
 
   const T& top(void) const { return *(queue.begin()); }

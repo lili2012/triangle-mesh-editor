@@ -213,7 +213,7 @@ namespace CS248 {
     int intersectCountShouldBe = (int)ish0InTriangle + (int)ish1InTriangle;
     if (intersection.size() > intersectCountShouldBe) {
       e0 = nextEdge;
-      return VertexIter();
+      return verticesEnd();
     }
 
     if (ish0InTriangle) {
@@ -1120,7 +1120,7 @@ namespace CS248 {
 
   EdgeRecord::EdgeRecord(EdgeIter& _edge) : edge(_edge) {
     // *** Extra Credit ***
-    // TODO: (meshEdit)
+    // (meshEdit)
     // Compute the combined quadric from the edge endpoints.
     // -> Build the 3x3 linear system whose solution minimizes the quadric error
     //    associated with these two endpoints.
@@ -1128,6 +1128,15 @@ namespace CS248 {
     //    EdgeRecord::optimalPoint.
     // -> Also store the cost associated with collapsing this edg in
     //    EdgeRecord::Cost.
+    Matrix4x4 quadric = edge->getQuadric();
+    Matrix3x3 A;
+    A.column(0) = quadric.column(0).to3D();
+    A.column(1) = quadric.column(1).to3D();
+    A.column(2) = quadric.column(2).to3D();
+    Vector3D b = quadric.column(3).to3D();
+    optimalPoint = A.inv() * b;
+    Vector4D optimalPoint4D(optimalPoint, 1);
+    this->score = dot(optimalPoint4D, (quadric * optimalPoint4D));
   }
 
   void MeshResampler::upsample(HalfedgeMesh& mesh)
@@ -1237,9 +1246,21 @@ namespace CS248 {
     // the new mesh based on the values we computed for the original mesh.
   }
 
+  static void removeVertexEdges(VertexIter v, set<EdgeRecord>& toBeRemoved)
+  {
+    HalfedgeIter _h = v->halfedge();
+    HalfedgeIter h = _h;
+    while (true) {
+      EdgeIter edge = h->edge();
+      toBeRemoved.insert(edge->record);
+      h = h->twin()->next();
+      if (h == _h)break;
+    }
+  }
+
   void MeshResampler::downsample(HalfedgeMesh& mesh) {
     // *** Extra Credit ***
-    // TODO: (meshEdit)
+    // (meshEdit)
     // Compute initial quadrics for each face by simply writing the plane equation
     // for the face in homogeneous coordinates. These quadrics should be stored
     // in Face::quadric
@@ -1254,7 +1275,68 @@ namespace CS248 {
     //    the collapsed vertex AFTER it's been collapsed. Also remember to assign
     //    a quadric to the collapsed vertex, and to pop the collapsed edge off the
     //    top of the queue.
-    showError("downsample() not implemented.");
+    for (FaceIter it = mesh.facesBegin(); it != mesh.facesEnd(); it++) {
+      it->calcQuadric();
+    }
+    for (VertexIter it = mesh.verticesBegin(); it != mesh.verticesEnd(); it++) {
+      it->calcQuadric();
+    }
+    MutablePriorityQueue<EdgeRecord> queue;
+    for (EdgeIter it = mesh.edgesBegin(); it != mesh.edgesEnd(); it++) {
+      EdgeRecord record(it);
+      it->record = record;
+      queue.insert(record);
+    }
+    int nFaces = mesh.nFaces();
+    int targetFaces = nFaces / 4;
+    while (true) {
+      int n = mesh.nFaces();
+      cout << n << endl;
+      if (n <= targetFaces) break;
+      EdgeRecord record = queue.top();
+      queue.pop();
+      EdgeIter edge = record.edge;
+
+      HalfedgeIter h0 = edge->halfedge();
+      HalfedgeIter h1 = h0->twin();
+      VertexIter v0 = h0->vertex();
+      VertexIter v1 = h1->vertex();
+      Matrix4x4 quatric = v0->quadric + v1->quadric;
+      set<EdgeRecord> toBeRemoved;
+      removeVertexEdges(v0, toBeRemoved);
+      removeVertexEdges(v1, toBeRemoved);
+      toBeRemoved.erase(record);
+      for (auto& record : toBeRemoved) {
+        if (!queue.remove(record)) {
+          toBeRemoved.erase(record);
+        }
+      }
+      VertexIter vertex = mesh.collapseEdge(edge);
+      if (vertex != mesh.verticesEnd()) {
+        vertex->position = record.optimalPoint;
+        vertex->quadric = quatric;
+        HalfedgeIter _h = vertex->halfedge();
+        HalfedgeIter h = _h;
+        while (true) {
+
+          EdgeIter edge = h->edge();
+          EdgeRecord record(edge);
+          edge->record = record;
+          queue.insert(record);
+          h = h->twin()->next();
+          if (h == _h) break;
+        }
+      }
+      else {
+        for (auto& record : toBeRemoved) {
+          queue.insert(record);
+        }
+
+      }
+    }
+
+
+
   }
 
   void MeshResampler::resample(HalfedgeMesh& mesh) {
@@ -1331,5 +1413,7 @@ namespace CS248 {
 
     }
   }
+
+
 
 }  // namespace CS248

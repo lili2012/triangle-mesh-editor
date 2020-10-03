@@ -45,6 +45,21 @@ Vector3D Face::normal() const {
   return N.unit();
 }
 
+//https://mathinsight.org/distance_point_plane#:~:text=The%20shortest%20distance%20from%20a,as%20a%20gray%20line%20segment.
+void Face::calcQuadric()
+{
+  Vector3D n = normal();
+  Vector3D p = halfedge()->vertex()->position;
+  double d = -dot(n, p);
+  double a = n.x;
+  double b = n.y;
+  double c = n.z;
+  quadric.column(0) = Vector4D(a*a, a*b, a*c, a*d);
+  quadric.column(1) = Vector4D(a*b, b*b, b*c, b*d);
+  quadric.column(2) = Vector4D(a*c, b*c, c*c, c*d);
+  quadric.column(3) = Vector4D(a*d, b*d, c*d, d*d);
+}
+
 void HalfedgeMesh::build(const vector<vector<Index> >& polygons,
                          const vector<Vector3D>& vertexPositions)
 // This method initializes the halfedge data structure from a raw list of
@@ -688,6 +703,23 @@ CS248::HalfedgeIter Vertex::getBoundaryHalfedge() const
   return INVALID_HALFEDGEITER;
 }
 
+void Vertex::calcQuadric()
+{
+  HalfedgeIter h = _halfedge;
+  Matrix4x4 quadric;
+  do {
+    // don't count boundary loops
+    FaceIter f = h->face();
+    if (!f->isBoundary()) {
+      quadric += f->quadric;
+    }
+
+    // move to the next halfedge around the vertex
+    h = h->twin()->next();
+  } while (h != _halfedge);  // done iterating over halfedges
+  this->quadric = quadric;
+}
+
 void Vertex::getAxes(vector<Vector3D>& axes) const {
   axes.resize(3);
 
@@ -732,6 +764,16 @@ void Edge::getAxes(vector<Vector3D>& axes) const {
 
   // Choose the Y direction so that X x Y = Z
   axes[1] = cross(axes[2], axes[0]);
+}
+
+CS248::Matrix4x4 Edge::getQuadric() const
+{
+  HalfedgeCIter h0 = halfedge();
+  HalfedgeCIter h1 = h0->twin();
+  VertexCIter v0 = h0->vertex();
+  VertexCIter v1 = h1->vertex();
+  Matrix4x4 quadric = v0->quadric + v1->quadric;
+  return quadric;
 }
 
 void Face::getAxes(vector<Vector3D>& axes) const {

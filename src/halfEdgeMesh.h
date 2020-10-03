@@ -505,6 +505,7 @@ class Face : public HalfedgeElement {
    */
   Vector3D normal() const;
 
+  void calcQuadric();
   /* For subdivision, we need to assign each vertex, edge, and face
    * of the original mesh a unique index that will become the index
    * of some vertex in the new (subdivided) mesh.
@@ -685,6 +686,8 @@ class Vertex : public HalfedgeElement {
     return d;
   }
 
+  void calcQuadric();
+
   Matrix4x4 quadric;
 
  protected:
@@ -744,6 +747,7 @@ class Edge : public HalfedgeElement {
    */
   virtual void getAxes(vector<Vector3D>& axes) const;
 
+  Matrix4x4 getQuadric() const;
   /**
    * For subdivision, this will be the position for the edge midpoint
    */
