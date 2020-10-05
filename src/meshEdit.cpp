@@ -1133,7 +1133,7 @@ namespace CS248 {
     A.column(0) = quadric.column(0).to3D();
     A.column(1) = quadric.column(1).to3D();
     A.column(2) = quadric.column(2).to3D();
-    Vector3D b = quadric.column(3).to3D();
+    Vector3D b = -quadric.column(3).to3D();
     optimalPoint = A.inv() * b;
     Vector4D optimalPoint4D(optimalPoint, 1);
     this->score = dot(optimalPoint4D, (quadric * optimalPoint4D));
@@ -1291,7 +1291,6 @@ namespace CS248 {
     int targetFaces = nFaces / 4;
     while (true) {
       int n = mesh.nFaces();
-      cout << n << endl;
       if (n <= targetFaces) break;
       EdgeRecord record = queue.top();
       queue.pop();
